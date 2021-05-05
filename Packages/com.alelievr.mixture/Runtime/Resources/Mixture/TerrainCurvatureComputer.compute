@@ -1,0 +1,93 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CurvatureComputer
+#pragma kernel SmoothHeight
+#pragma kernel AspectComputer
+#pragma kernel Preview
+
+RWTexture2D<float4> _Output;
+
+float __Hidden;
+// Include utility stuff to handle multi-dimension input textures
+#include "Packages/com.alelievr.mixture/Runtime/Shaders/MixtureComputeUtils.hlsl"
+#include "Packages/com.alelievr.mixture/Runtime/Shaders/TerrainTopologyUtils.hlsl"
+// By default all RW* structs (RWTexture, RWBuffer, etc) will appear as outputs in the node
+// If you don't want this behaviour, you can prefix your variable with '__',
+// it will prevent the property to show up in the code input/outputs.
+// Note that every property declared after a function won't be visible in the node UI.
+
+#define PI 3.1415926535897931
+#define Rad2Deg 180.0 / PI
+
+
+float PlanCurvature(float zx, float zy, float zxx, float zyy, float zxy)
+{
+    float zx2 = zx * zx;
+    float zy2 = zy * zy;
+    float p = zx2 + zx2;
+    float n = zy2 * zxx - 2.0 * zxy * zx * zy + zx2 * zyy;
+    float d = pow(p, 1.5);
+    return d == 0.0 ? 0.0 : n / d;
+}
+
+float HorizontalCurvature(float2 d1, float3 d2)
+{
+    float zx2 = d1.x * d1.x;
+    float zy2 = d1.y * d1.y;
+    float p = zx2 + zy2;
+    float n = zy2 * d2.x - 2.0 * d2.z * d1.x * d1.y + zy2 * d2.y;
+    float d = p * pow(p + 1, 0.5);
+    return d == 0 ? 0 : n / d;
+}
+
+float Aspect(float2 d1)
+{
+    float gyx = d1.x == 0 ? 0 : d1.y / d1.x;
+    float gxx = d1.x == 0 ? 0 : d1.x / abs(d1.x);
+    
+    float aspect = 180 - atan(gyx) * Rad2Deg + 90 * gxx;
+    aspect /= 360;
+    return aspect;
+
+}
+
+[numthreads(16, 16, 1)]
+void AspectComputer(uint3 id : SV_DispatchThreadID)
+{
+    float2 d1 = GetFirstDerivative(id.xy);
+    float aspect = Aspect(d1);
+    float4 color = Colorize(aspect, 0, true);
+    _Output[id.xy] = color;
+
+}
+
+[numthreads(16, 16, 1)]
+void SmoothHeight(uint3 id : SV_DispatchThreadID)
+{
+    SmoothHeightMap(id.xy);
+}
+
+[numthreads(32,32,1)]
+void CurvatureComputer (uint3 id : SV_DispatchThreadID)
+{
+    float2 d1;
+    float3 d2;
+    
+    GetDerivatives(id.xy, d1, d2);
+    //float curvature = PlanCurvature(d1.x, d1.y, d2.x, d2.y, d2.z);
+    float curvature = HorizontalCurvature(d1, d2);
+    float4 color = Colorize(curvature, 2.5, false);
+    
+    //_Output[id.xy] = float4(curvature, curvature, curvature, 1);
+    _Output[id.xy] = color;
+}
+
+// This will be used for the preview Texture in the node
+RWTexture2D<float4> _Preview;
+float4 _PreviewResolution; // xy is the pixel resolution and zw is 1 / xy
+
+[numthreads(8, 8, 1)]
+void Preview(uint3 id : SV_DispatchThreadID)
+{
+    // You can insert custom preview code here
+    _Preview[id.xy] = _Output[id.xy];
+}

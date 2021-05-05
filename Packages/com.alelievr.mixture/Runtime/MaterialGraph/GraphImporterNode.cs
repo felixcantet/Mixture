@@ -4,39 +4,59 @@ using UnityEngine.Rendering;
 using System.Collections.Generic;
 namespace Mixture
 {
+    public class MaterialData
+    {
+        public Texture texture;
+        public string Label;
+        public MixtureRTSettings settings;
+        public string Name;
+
+    }
+
     [System.Serializable, NodeMenuItem("Custom/Graph Importer Node")]
     public class GraphImporterNode : MixtureNode
     {
         [Output]
-        public List<Texture> output;
+        public List<MaterialData> output;
 
         public override string name => "Graph Importer Node";
-        public MixtureGraph graph;
+        public MixtureGraph importedGraph;
         //public override Texture previewTexture => output;
-
+        public override bool showDefaultInspector => false;
         [CustomPortBehavior(nameof(output))]
         public IEnumerable<PortData> GetPortsForOutput(List<SerializableEdge> edges)
         {
-            if (graph == null)
+            if (importedGraph == null)
                 yield break;
             yield return new PortData
             {
                 acceptMultipleEdges = true,
                 displayName = "All Textures",
-                displayType = typeof(List<Texture>),
+                displayType = typeof(List<MaterialData>),
                 identifier = "Output"
             };
-            for (int i = 0; i < graph.outputNode.outputTextureSettings.Count; i++)
+            for (int i = 0; i < output.Count; i++)
             {
-                var outputTexture = graph.outputNode.outputTextureSettings[i];
+                var outputTexture = output[i];
                 yield return new PortData
                 {
                     acceptMultipleEdges = true,
-                    displayName = outputTexture.name,
-                    displayType = TextureUtils.GetTypeFromDimension(graph.outputNode.rtSettings.GetTextureDimension(graph)),
+                    displayName = outputTexture.Name,
+                    displayType = TextureUtils.GetTypeFromDimension(outputTexture.settings.GetTextureDimension(importedGraph)),
                     identifier = i.ToString()
                 };
             }
+            //for (int i = 0; i < importerGraph.outputNode.outputTextureSettings.Count; i++)
+            //{
+            //    var outputTexture = importerGraph.outputNode.outputTextureSettings[i];
+            //    yield return new PortData
+            //    {
+            //        acceptMultipleEdges = true,
+            //        displayName = outputTexture.name,
+            //        displayType = TextureUtils.GetTypeFromDimension(importerGraph.outputNode.rtSettings.GetTextureDimension(importerGraph)),
+            //        identifier = i.ToString()
+            //    };
+            //}
         }
 
         [CustomPortOutput(nameof(output), typeof(Texture))]
@@ -47,12 +67,13 @@ namespace Mixture
             {
                 if (edge.outputPortIdentifier == "Output")
                 {
+                    Debug.Log($"Type = {edge.inputPort.portData.displayType.Name}");
                     edge.passThroughBuffer = output;
                 }
                 else
                 {
                     int value = int.Parse(edge.outputPortIdentifier);
-                    edge.passThroughBuffer = graph.outputTextures[value];
+                    edge.passThroughBuffer = output[value].texture;
                     i++;
                 }
             }
