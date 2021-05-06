@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using GraphProcessor;
 using UnityEngine.Rendering;
@@ -5,19 +6,19 @@ using UnityEngine.Rendering;
 namespace Mixture
 {
 	[System.Serializable, NodeMenuItem("Custom/PBR Material Blending")]
-	public class PBRMaterialBlend : MixtureNode
+	public class PBRMaterialBlend : MixtureNode, IUseCustomRenderTextureProcessing
 	{
         [Input("Material A")]
-        public PBRStructure MaterialA;
+        public Material MaterialA;
 
         [Input("Material B")]
-        public PBRStructure MaterialB;
+        public Material MaterialB;
 
         [Output]
         public PBRStructure output;
 
         RenderTexture controlMap;
-
+        
 		public override string	name => "PBR Material Blender";
 
         protected override void Enable()
@@ -53,17 +54,25 @@ namespace Mixture
             if (!base.ProcessNode(cmd))
                 return false;
             //cmd.Blit()
+            
             GetControlMap();
 
-
-			return true;
+            return true;
 		}
 
 		Texture GetControlMap()
         {
-           
+            
+            
+            return null;
         }
 
-        
+
+        public IEnumerable<CustomRenderTexture> GetCustomRenderTextures()
+        {
+            
+            
+            yield return null;
+        }
     }
 }

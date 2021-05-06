@@ -14,6 +14,15 @@ namespace Mixture
     }
 
     [Serializable]
+    class MaterialParameter : ExposedParameter
+    {
+        [SerializeField] Material val;
+
+        public override object value { get => val; set => val = (Material)value; }
+        public override Type GetValueType() => typeof(Material);
+    }
+    
+    [Serializable]
 	class Texture3DParameter : ExposedParameter
     {
         [SerializeField] Texture3D val;

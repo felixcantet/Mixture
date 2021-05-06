@@ -24,6 +24,7 @@ namespace Mixture
 			yield return typeof(BoolParameter);
 			yield return typeof(ColorParameter);
 			yield return typeof(TextureParameter);
+			yield return typeof(MaterialParameter);
 			yield return typeof(RenderTextureParameter);
 			yield return typeof(Texture2DParameter);
 			yield return typeof(Texture3DParameter);
