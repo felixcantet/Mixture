@@ -14,7 +14,7 @@ namespace Mixture
         [Input("Material B")]
         public Material MaterialB;
 
-        [Output]
+        [Output][ShowInInspector(showInNode = true)]
         public Material output;
 
         CustomRenderTexture[] shaderInputs;
@@ -36,8 +36,7 @@ namespace Mixture
                // shaderInputs.Capacity = props.Length;
                 for(int i = 0; i < props.Length; i++)
                 {
-                    var mat = new Material(Shader.Find("Hidden/Mixture/ColorMatte"));
-                    mat.SetColor("_Color", Color.red);
+                    var mat = new Material(Shader.Find("Hidden/Mixture/HeightBlend"));
                     blendingMaterials.Add(mat);
                     shaderInputs[i] = new CustomRenderTexture(graph.outputNode.rtSettings.width, graph.outputNode.rtSettings.height) { material = mat };
                 }
@@ -64,17 +63,34 @@ namespace Mixture
         {
             if (!base.ProcessNode(cmd))
                 return false;
+            var materialTexProps = MaterialA.GetTexturePropertyNames();
             for (int i = 0; i < shaderInputs.Length; i++)
             {
+                
                 var tex = shaderInputs[i];
                 UpdateTempRenderTexture(ref tex);
-                tex.material.color = Color.blue;
+                // tex.material.SetTexture("_MapA", MaterialA.GetTexture(materialTexProps[i]));
+                // tex.material.SetTexture("_MapB", MaterialB.GetTexture(materialTexProps[i]));
+                // tex.material.SetTexture("_HeightA", MaterialA.GetTexture("_ParallaxMap"));
+                // tex.material.SetTexture("_HeightB", MaterialB.GetTexture("_ParallaxMap"));
+                Debug.Log(i + " : " +  MaterialA.GetTexture(materialTexProps[i]));
+                MixtureUtils.SetTextureWithDimension(tex.material,"_MapA", MaterialA.GetTexture(materialTexProps[i]));
+                MixtureUtils.SetTextureWithDimension(tex.material,"_MapB", MaterialB.GetTexture(materialTexProps[i]));
+                MixtureUtils.SetTextureWithDimension(tex.material,"_HeightA", MaterialA.GetTexture("_ParallaxMap"));
+                MixtureUtils.SetTextureWithDimension(tex.material,"_HeightB", MaterialB.GetTexture("_ParallaxMap"));
+                tex.material.SetFloat("_HeightmapBlending", 0.95f);
             }
+            
             Debug.Log("Texture Count : " + this.shaderInputs.Length);
 
-            output.SetTexture("_MainTex", this.shaderInputs[0]);
-
-
+            for (int i = 0; i < shaderInputs.Length; i++)
+            {
+                
+                output.SetTexture(materialTexProps[i], shaderInputs[i]); 
+            }
+            
+            Debug.Log("Shader : " + output.shader);
+ 
 
             return true;
         }
@@ -85,13 +101,20 @@ namespace Mixture
 
             return null;
         }
-
-
+        //
+        // [CustomPortOutput(nameof(output), typeof(Material))]
+        // void PushOutputs(List<SerializableEdge> edges)
+        // {
+        //     
+        // }
+        
+        
         public IEnumerable<CustomRenderTexture> GetCustomRenderTextures()
         {
             //yield return controlMap;
             foreach (var item in shaderInputs)
             {
+                
                 yield return item;
             }
 

@@ -293,6 +293,8 @@ namespace Mixture
 
 		public static void SetTextureWithDimension(Material material, string propertyName, Texture texture)
 		{
+			if (texture == null)
+				return;
 			if (shaderPropertiesDimensionSuffix.TryGetValue(texture.dimension, out var suffix))
 			{
 #if UNITY_EDITOR
