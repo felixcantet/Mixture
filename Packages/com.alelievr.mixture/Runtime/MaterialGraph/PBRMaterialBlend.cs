@@ -5,9 +5,9 @@ using UnityEngine.Rendering;
 
 namespace Mixture
 {
-	[System.Serializable, NodeMenuItem("Custom/PBR Material Blending")]
-	public class PBRMaterialBlend : MixtureNode, IUseCustomRenderTextureProcessing
-	{
+    [System.Serializable, NodeMenuItem("Custom/PBR Material Blending")]
+    public class PBRMaterialBlend : MixtureNode, IUseCustomRenderTextureProcessing
+    {
         [Input("Material A")]
         public Material MaterialA;
 
@@ -15,64 +15,86 @@ namespace Mixture
         public Material MaterialB;
 
         [Output]
-        public PBRStructure output;
+        public Material output;
 
-        RenderTexture controlMap;
-        
-		public override string	name => "PBR Material Blender";
+        CustomRenderTexture[] shaderInputs;
+        List<Material> blendingMaterials;
+        Material controlMapMaterial;
+        CustomRenderTexture controlMap;
+
+        public override string name => "PBR Material Blender";
 
         protected override void Enable()
         {
-            
-            graph.outputNode.onSettingsChanged += CreateControlMap;
+            //shaderInputs = new List<CustomRenderTexture>();
+            blendingMaterials = new List<Material>();
+            if (MaterialA != null)
+            {
+                output = new Material(Shader.Find(MaterialA.shader.name));
+                var props = MaterialA.GetTexturePropertyNames();
+                shaderInputs = new CustomRenderTexture[props.Length];
+               // shaderInputs.Capacity = props.Length;
+                for(int i = 0; i < props.Length; i++)
+                {
+                    var mat = new Material(Shader.Find("Hidden/Mixture/ColorMatte"));
+                    mat.SetColor("_Color", Color.red);
+                    blendingMaterials.Add(mat);
+                    shaderInputs[i] = new CustomRenderTexture(graph.outputNode.rtSettings.width, graph.outputNode.rtSettings.height) { material = mat };
+                }
+
+            }
         }
 
         void CreateControlMap()
         {
-            if(this.controlMap != null && this.controlMap.IsCreated())
-            {
-                this.controlMap.Release();
-            }
-            controlMap = new RenderTexture(graph.outputNode.rtSettings.width, graph.outputNode.rtSettings.height, 0);
-            controlMap.enableRandomWrite = true;
-            controlMap.Create();
+
+
         }
 
 
         protected override void Disable()
         {
-            graph.outputNode.onSettingsChanged -= CreateControlMap;
         }
 
         protected override void Destroy()
         {
-            graph.outputNode.onSettingsChanged -= CreateControlMap;
         }
 
         protected override bool ProcessNode(CommandBuffer cmd)
-		{
+        {
             if (!base.ProcessNode(cmd))
                 return false;
-            //cmd.Blit()
-            
-            GetControlMap();
+            for (int i = 0; i < shaderInputs.Length; i++)
+            {
+                var tex = shaderInputs[i];
+                UpdateTempRenderTexture(ref tex);
+                tex.material.color = Color.blue;
+            }
+            Debug.Log("Texture Count : " + this.shaderInputs.Length);
+
+            output.SetTexture("_MainTex", this.shaderInputs[0]);
+
+
 
             return true;
-		}
+        }
 
-		Texture GetControlMap()
+        Texture GetControlMap()
         {
-            
-            
+
+
             return null;
         }
 
 
         public IEnumerable<CustomRenderTexture> GetCustomRenderTextures()
         {
-            
-            
-            yield return null;
+            //yield return controlMap;
+            foreach (var item in shaderInputs)
+            {
+                yield return item;
+            }
+
         }
     }
 }
