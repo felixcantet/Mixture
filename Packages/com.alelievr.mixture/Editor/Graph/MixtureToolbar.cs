@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using GraphProcessor;
-
 namespace Mixture
 {
 	using Status = UnityEngine.UIElements.DropdownMenuAction.Status;
@@ -50,7 +49,7 @@ namespace Mixture
 			}
 		}
 
-		protected override void AddButtons()
+        protected override void AddButtons()
 		{
 			// Add the hello world button on the left of the toolbar
 			AddButton(Styles.processButtonText, Process, left: false);
@@ -61,8 +60,8 @@ namespace Mixture
 			// For now we don't display the show parameters
 			// AddToggle("Show Parameters", exposedParamsVisible, (v) => graphView.ToggleView<ExposedParameterView>());
 			AddButton("Show In Project", () => {
-				EditorGUIUtility.PingObject(graph.mainOutputTexture);
-				ProjectWindowUtil.ShowCreatedAsset(graph.mainOutputTexture);
+				EditorGUIUtility.PingObject(graph.mainOutputAsset);
+				ProjectWindowUtil.ShowCreatedAsset(graph.mainOutputAsset);
 				// Selection.activeObject = graph;
 			});
 			AddToggle(Styles.parameterViewsText, graph.isParameterViewOpen, ToggleParameterView, left: true);
@@ -90,7 +89,7 @@ namespace Mixture
             {
                 EditorUtility.DisplayProgressBar("Mixture", "Saving All...", 0.0f);
 
-                graph.SaveAllTextures();
+                graph.SaveAll();
 				graph.UpdateLinkedVariants();
 
                 List<ExternalOutputNode> externalOutputs = new List<ExternalOutputNode>();

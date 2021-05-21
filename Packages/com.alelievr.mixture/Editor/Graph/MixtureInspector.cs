@@ -28,7 +28,7 @@ namespace Mixture
 			MixtureGraph graph;
 			if (mixtureAssets.TryGetValue(assetGUID, out graph))
 			{
-				DrawMixtureSmallIcon(rect, graph, Selection.Contains(graph.mainOutputTexture));
+				DrawMixtureSmallIcon(rect, graph, Selection.Contains(graph.mainOutputAsset));
 				return ;
 			}
 
@@ -269,7 +269,7 @@ namespace Mixture
 			{
 				var updateButton = new Button(() => {
 					MixtureGraphProcessor.RunOnce(graph);
-					graph.SaveAllTextures(false);
+					graph.SaveAll(false);
 					graph.UpdateLinkedVariants();
 				}) { text = "Update Texture(s)" };
 				updateButton.AddToClassList("Indent");
@@ -281,7 +281,7 @@ namespace Mixture
 		VisualElement CreateTextureSettingsView()
 		{
 			var textureSettings = new VisualElement();
-
+			
 			var t = target as Texture;
 
 			var settingsLabel = new Label("Texture Settings");
@@ -291,27 +291,27 @@ namespace Mixture
 			var settings = new VisualElement();
 			settings.AddToClassList("Indent");
 			textureSettings.Add(settings);
-
-			var wrapMode = new EnumField("Wrap Mode", t.wrapMode);
-			wrapMode.RegisterValueChangedCallback(e => {
-				Undo.RegisterCompleteObjectUndo(t, "Changed wrap mode");
-				t.wrapMode = (TextureWrapMode)e.newValue;
-			});
-			settings.Add(wrapMode);
-
-			var filterMode = new EnumField("Filter Mode", t.filterMode);
-			filterMode.RegisterValueChangedCallback(e => {
-				Undo.RegisterCompleteObjectUndo(t, "Changed filter mode");
-				t.filterMode = (FilterMode)e.newValue;
-			});
-			settings.Add(filterMode);
-
-			var aniso = new SliderInt("Aniso Level", 1, 9);
-			aniso.RegisterValueChangedCallback(e => {
-				Undo.RegisterCompleteObjectUndo(t, "Changed aniso level");
-				t.anisoLevel = e.newValue;
-			});
-			settings.Add(aniso);
+			if (graph.type != MixtureGraphType.Material)
+			{
+				var wrapMode = new EnumField("Wrap Mode", t.wrapMode);
+				wrapMode.RegisterValueChangedCallback(e => {
+					Undo.RegisterCompleteObjectUndo(t, "Changed wrap mode");
+					t.wrapMode = (TextureWrapMode)e.newValue;
+				});
+				settings.Add(wrapMode);
+				var filterMode = new EnumField("Filter Mode", t.filterMode);
+				filterMode.RegisterValueChangedCallback(e => {
+					Undo.RegisterCompleteObjectUndo(t, "Changed filter mode");
+					t.filterMode = (FilterMode)e.newValue;
+				});
+				settings.Add(filterMode);
+				var aniso = new SliderInt("Aniso Level", 1, 9);
+				aniso.RegisterValueChangedCallback(e => {
+					Undo.RegisterCompleteObjectUndo(t, "Changed aniso level");
+					t.anisoLevel = e.newValue;
+				});
+				settings.Add(aniso);
+			}
 
 			return textureSettings;
 		}
@@ -390,6 +390,26 @@ namespace Mixture
 		}
 	}
 
+	//[CustomEditor(typeof(Material), false)]
+	class MixtureInspectorMaterial : MixtureEditor
+	{
+		private Material material;
+		protected override void OnEnable()
+		{
+			base.OnEnable();
+			//LoadInspectorFor(typeof(Texture2D), targets);
+		}
+
+		public override void DrawPreview(Rect previewArea)
+		{
+			OnPreviewGUI(previewArea, GUIStyle.none);
+		}
+
+		public override bool HasPreviewGUI() => false;
+
+
+	}
+	
 	[CustomEditor(typeof(Texture2DArray), false)]
 	class MixtureInspectorTexture2DArray : MixtureEditor
 	{

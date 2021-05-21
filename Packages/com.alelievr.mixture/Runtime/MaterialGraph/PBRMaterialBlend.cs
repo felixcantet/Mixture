@@ -21,7 +21,8 @@ namespace Mixture
         List<Material> blendingMaterials;
         Material controlMapMaterial;
         CustomRenderTexture controlMap;
-
+        [ShowInInspector(showInNode = true)]public string heightPropertyName;
+        [ShowInInspector(showInNode = true)]public float HeightBlendValue;
         public override string name => "PBR Material Blender";
 
         protected override void Enable()
@@ -76,9 +77,9 @@ namespace Mixture
                 Debug.Log(i + " : " +  MaterialA.GetTexture(materialTexProps[i]));
                 MixtureUtils.SetTextureWithDimension(tex.material,"_MapA", MaterialA.GetTexture(materialTexProps[i]));
                 MixtureUtils.SetTextureWithDimension(tex.material,"_MapB", MaterialB.GetTexture(materialTexProps[i]));
-                MixtureUtils.SetTextureWithDimension(tex.material,"_HeightA", MaterialA.GetTexture("_ParallaxMap"));
-                MixtureUtils.SetTextureWithDimension(tex.material,"_HeightB", MaterialB.GetTexture("_ParallaxMap"));
-                tex.material.SetFloat("_HeightmapBlending", 0.95f);
+                MixtureUtils.SetTextureWithDimension(tex.material,"_HeightA", MaterialA.GetTexture(heightPropertyName));
+                MixtureUtils.SetTextureWithDimension(tex.material,"_HeightB", MaterialB.GetTexture(heightPropertyName));
+                tex.material.SetFloat("_HeightmapBlending", HeightBlendValue);
             }
             
             Debug.Log("Texture Count : " + this.shaderInputs.Length);

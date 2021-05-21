@@ -45,7 +45,7 @@ namespace Mixture
 		{
 			Debug.Log("Curstom POrt Input");
 			Debug.Log(edges.Count);
-			Debug.Log(input.GetTexture("_MainTex"));
+			//Debug.Log(input.GetTexture("_MainTex"));
 			if(edges.Count > 0)
 			{
 				this.input = edges[0].passThroughBuffer as Material;

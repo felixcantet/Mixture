@@ -84,13 +84,12 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 		protected override void Enable()
 		{
 			defaultShader = Shader.Find(DefaultShaderName);
-
+			
 			if (material == null)
 			{
 				material = new Material(shader != null ? shader : defaultShader);
 				material.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 			}
-
 			beforeProcessSetup += BeforeProcessSetup;
 
 			UpdateShader();
@@ -251,8 +250,8 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 
 			var outputDimension = rtSettings.GetTextureDimension(graph);
 			MixtureUtils.SetupDimensionKeyword(material, outputDimension);
-
 			var s = material.shader;
+			
 			for (int i = 0; i < s.GetPropertyCount(); i++)
 			{
 				if (s.GetPropertyType(i) != ShaderPropertyType.Texture)
@@ -283,7 +282,6 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 
             bool useCustomUV = material.HasTextureBound("_UV", rtSettings.GetTextureDimension(graph));
             material.SetKeywordEnabled("USE_CUSTOM_UV", useCustomUV);
-
 			return true;
 		}
 

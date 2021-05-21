@@ -65,8 +65,15 @@ namespace Mixture
 
 		void RefreshOutputPortSettings()
 		{
-            foreach (var view in inputPortElements.Values)
-                view.RefreshSettings();
+			if (graph.type != MixtureGraphType.Material)
+			{
+				foreach (var view in inputPortElements.Values)
+					view.RefreshSettings();
+			}
+			else
+			{
+				
+			}
 		}
 
 		void UpdatePortView()
@@ -173,7 +180,7 @@ namespace Mixture
 
 		void SaveAllTextures()
 		{
-			graph.SaveAllTextures();
+			graph.SaveAll();
 			graph.UpdateLinkedVariants();
 		}
 

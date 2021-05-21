@@ -44,7 +44,7 @@ namespace Mixture
 		protected override void UpdateParameterList()
         {
             content.Clear();
-
+			
             foreach (var param in graphView.graph.exposedParameters)
             {
                 var row = new BlackboardRow(new ExposedParameterFieldView(graphView, param), new MixtureExposedParameterPropertyView(graphView, param));
