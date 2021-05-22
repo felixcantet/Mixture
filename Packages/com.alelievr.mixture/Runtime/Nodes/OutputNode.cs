@@ -3,8 +3,11 @@ using UnityEngine;
 using GraphProcessor;
 using System;
 using System.Linq;
+using System.Reflection;
+using UnityEditor;
 using UnityEngine.Rendering;
 using UnityEngine.Profiling;
+using UnityEngine.Rendering.HighDefinition;
 
 namespace Mixture
 {
@@ -20,17 +23,80 @@ namespace Mixture
 
         public override string name => "Output Texture Asset";
 
-        public override Texture previewTexture => graph.type == MixtureGraphType.Realtime
-            ?
-            graph.mainOutputAsset as Texture
-            : outputTextureSettings.Count > 0
-                ? outputTextureSettings[0].finalCopyRT
-                : null;
+        public override Texture previewTexture
+        {
+            get
+            {
+                if (graph.type != MixtureGraphType.Material)
+                {
+                    return graph.type == MixtureGraphType.Realtime
+                        ? graph.mainOutputAsset as Texture
+                        : outputTextureSettings.Count > 0
+                            ? outputTextureSettings[0].finalCopyRT
+                            : null;
+                }
+                else
+                {
+#if UNITY_EDITOR
+                    return AssetPreview.GetAssetPreview(graph.outputMaterial);
+                    
+#else
+                    return graph.type == MixtureGraphType.Realtime
+                        ? graph.mainOutputAsset as Texture
+                        : outputTextureSettings.Count > 0
+                            ? outputTextureSettings[0].finalCopyRT
+                            : null;
+#endif
+                }
+            }
+        }
 
         public override float nodeWidth => 350;
 
         // TODO: move this to NodeGraphProcessor
         [NonSerialized] protected HashSet<string> uniqueMessages = new HashSet<string>();
+
+        //[HideInInspector] public Dictionary<string, bool> enableParameters = new Dictionary<string, bool>(); 
+        [HideInInspector] public List<ShaderPropertyData> enableParameters = new List<ShaderPropertyData>();
+
+        [System.Serializable]
+        public class ShaderPropertyData
+        {
+            public int index;
+            public string name;
+            public string description;
+            public ShaderPropertyType type;
+            public TextureDimension dimension;
+            public bool displayInOutput = false;
+
+            public ShaderPropertyData(Shader shader, int index)
+            {
+                this.index = index;
+                this.name = shader.GetPropertyName(index);
+                this.description = shader.GetPropertyDescription(index);
+                this.type = shader.GetPropertyType(index);
+                if (this.type == ShaderPropertyType.Texture)
+                {
+                    this.dimension = shader.GetPropertyTextureDimension(index);
+                }
+
+                var flag = shader.GetPropertyFlags(index);
+                if ((flag & ShaderPropertyFlags.MainTexture) != 0 ||
+                    (flag & ShaderPropertyFlags.Normal) != 0 ||
+                    (flag & ShaderPropertyFlags.MainColor) != 0 ||
+                    (flag & ShaderPropertyFlags.MainTexture) != 0)
+                {
+                    this.displayInOutput = true;
+                }
+                else
+                {
+                    this.displayInOutput = false;
+                }
+
+                if ((flag & ShaderPropertyFlags.HideInInspector) != 0)
+                    this.displayInOutput = false;
+            }
+        }
 
         protected override MixtureRTSettings defaultRTSettings
         {
@@ -58,25 +124,8 @@ namespace Mixture
                 rtSettings.dimension = OutputDimension.Texture2D;
             rtSettings.editFlags |= EditFlags.POTSize;
 
-            if (graph.type == MixtureGraphType.Material)
-            {
-                var mat = graph.outputMaterial;
-                int propCount = mat.shader.GetPropertyCount();
-                for (int i = 0; i < propCount; i++)
-                {
-                    var type = mat.shader.GetPropertyType(i);
-                    if (type == ShaderPropertyType.Texture)
-                    {
-                        var setting = AddTextureOutput(OutputTextureSettings.Preset.Color);
-                        setting.name = mat.shader.GetPropertyName(i);
-                    }
-                    
-                }
-            }
-            
+            BuildOutputFromShaderProperties();
 
-            var tex = graph.FindOutputTexture("_MainTex", false);
-            Debug.Log("Tex : " + tex);
             // Checks that the output have always at least one element:
             if (outputTextureSettings.Count == 0)
                 AddTextureOutput(OutputTextureSettings.Preset.Color);
@@ -90,6 +139,69 @@ namespace Mixture
                     outputTextureSettings.First().isMain = true;
                 }
             }
+        }
+
+        public void BuildOutputFromShaderProperties()
+        {
+            Debug.Log("Build Output");
+            for (int i = 0; i < enableParameters.Count; i++)
+            {
+                if (enableParameters[i].type != ShaderPropertyType.Texture)
+                    continue;
+                // If the parameter is currently display
+                if (outputTextureSettings.Any(x => x.name == enableParameters[i].name))
+                {
+                    if (!enableParameters[i].displayInOutput)
+                    {
+                        RemoveTextureOutput(outputTextureSettings.Find(x => x.name == enableParameters[i].name));
+                    }
+                }
+                else
+                {
+                    if (enableParameters[i].displayInOutput)
+                    {
+                        var output = AddTextureOutput(OutputTextureSettings.Preset.Color);
+                        output.name = enableParameters[i].name;
+                    }
+                }
+            }
+
+            // Sort Output Settings by index of parameters list
+            this.outputTextureSettings = outputTextureSettings.OrderBy(x =>
+                enableParameters.IndexOf(enableParameters.Find(y => y.name == x.name))
+            ).ToList();
+
+            this.outputTextureSettings.ForEach(x =>
+                Debug.Log($"Index of : {x.name} = {outputTextureSettings.IndexOf(x)}"));
+
+
+            // //this.outputTextureSettings.ForEach(x => this.RemoveTextureOutput(x));
+            // for (int i = 0; i < outputTextureSettings.Count; i++)
+            // {
+            //     Debug.Log(outputTextureSettings[i].name);
+            //     this.RemoveTextureOutput(this.outputTextureSettings[i]);
+            // }
+            //
+            // //this.outputTextureSettings.Clear();
+            // var shader = graph.outputMaterial.shader;
+            // var propCount = shader.GetPropertyCount();
+            // if (propCount != enableParameters.Count)
+            // {
+            //     Debug.LogWarning("Enable Properties List don't match with current shader");
+            //     return;
+            // }
+            //
+            // for (int i = 0; i < propCount; i++)
+            // {
+            //     if (enableParameters[i].displayInOutput)
+            //     {
+            //         if (enableParameters[i].type == ShaderPropertyType.Texture)
+            //         {
+            //             var output = AddTextureOutput(OutputTextureSettings.Preset.Color);
+            //             output.name = name;
+            //         }
+            //     }
+            // }
         }
 
         // Disable reset on output texture settings
@@ -377,12 +489,11 @@ namespace Mixture
             {
                 // Find the correct output texture:
                 var output = outputTextureSettings.Find(o => o.name == edge.inputPort.portData.identifier);
-                
-                //Debug.Log("Input ID : " + edge.inputPort.portData.identifier + " | Output : " + output);
+
                 if (output != null)
                 {
                     output.inputTexture = edge.passThroughBuffer as Texture;
-                    if(output.inputTexture == null)
+                    if (output.inputTexture == null)
                         Debug.Log("Null Texture Input");
                 }
                 else
@@ -398,10 +509,8 @@ namespace Mixture
         {
             foreach (var output in outputTextureSettings)
             {
-                yield return output.finalCopyRT;    
+                yield return output.finalCopyRT;
             }
-
-            
         }
 
         protected void SetMaterialPropertiesFromEdges(List<SerializableEdge> edges, Material material)

@@ -205,14 +205,6 @@ MonoBehaviour:
     outputFieldName: outputTexture
     inputPortIdentifier: _MainTex
     outputPortIdentifier: outputTexture
-  - GUID: f529af11-2305-47db-88be-fc81865b5698
-    owner: {fileID: 11400000}
-    inputNodeGUID: 2de2d6b5-1d09-41b9-8962-506b526050e7
-    outputNodeGUID: 8080e917-a41b-49a1-8261-cf17e39cbfa2
-    inputFieldName: input
-    outputFieldName: output
-    inputPortIdentifier: 
-    outputPortIdentifier: 
   - GUID: 29837fe6-af91-48af-aec2-8b7b9baa9ed4
     owner: {fileID: 11400000}
     inputNodeGUID: f8839549-296c-4b38-88cc-788446e4e3c0
@@ -221,17 +213,25 @@ MonoBehaviour:
     outputFieldName: outputTexture
     inputPortIdentifier: _MainTex
     outputPortIdentifier: outputTexture
+  - GUID: 1da56104-0d22-437b-8359-10b513f87a02
+    owner: {fileID: 11400000}
+    inputNodeGUID: 2de2d6b5-1d09-41b9-8962-506b526050e7
+    outputNodeGUID: 8080e917-a41b-49a1-8261-cf17e39cbfa2
+    inputFieldName: input
+    outputFieldName: output
+    inputPortIdentifier: 
+    outputPortIdentifier: 
   groups: []
   stackNodes: []
   pinnedElements: []
   exposedParameters: []
   serializedParameterList: []
   stickyNotes: []
-  position: {x: -971, y: 581, z: 0}
-  scale: {x: 1.7490063, y: 1.7490063, z: 1}
+  position: {x: -447, y: 490, z: 0}
+  scale: {x: 1.520875, y: 1.520875, z: 1}
   version: 0
   type: 0
-  realtimePreview: 0
+  realtimePreview: 1
   isRealtime: 0
   isParameterViewOpen: 0
   embedInBuild: 0
@@ -256,8 +256,8 @@ MonoBehaviour:
         computeOrder: 8
         position:
           serializedVersion: 2
-          x: 1087.173
-          y: -316.5
+          x: 1088.3226
+          y: -318.5001
           width: 350
           height: 525
         expanded: 0
@@ -309,10 +309,10 @@ MonoBehaviour:
         computeOrder: 1
         position:
           serializedVersion: 2
-          x: -891.7
-          y: -6.999972
+          x: -891
+          y: -7
           width: 250
-          height: 567
+          height: 582
         expanded: 0
         debug: 0
         nodeLock: 0
@@ -749,10 +749,10 @@ MonoBehaviour:
         computeOrder: 6
         position:
           serializedVersion: 2
-          x: 485.35745
-          y: -242.01752
-          width: 100
-          height: 100
+          x: 485
+          y: -242.57184
+          width: 250
+          height: 134
         expanded: 0
         debug: 0
         nodeLock: 0
@@ -786,6 +786,8 @@ MonoBehaviour:
         MaterialA: {fileID: 0}
         MaterialB: {fileID: 0}
         output: {fileID: 0}
+        heightPropertyName: _ParallaxMap
+        HeightBlendValue: 0.6
     00000008:
       type: {class: DecomposeMaterial, ns: Mixture, asm: Mixture.Runtime}
       data:

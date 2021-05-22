@@ -7,20 +7,21 @@ using UnityEngine.Rendering;
 using UnityEditor.Experimental.GraphView;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.PlayerLoop;
 
 namespace Mixture
 {
-	[NodeCustomEditor(typeof(OutputNode))]
-	public class OutputNodeView : MixtureNodeView
-	{
-		protected OutputNode	outputNode;
-		protected MixtureGraph	graph;
+    [NodeCustomEditor(typeof(OutputNode))]
+    public class OutputNodeView : MixtureNodeView
+    {
+        protected OutputNode outputNode;
+        protected MixtureGraph graph;
 
-		protected Dictionary<string, OutputTextureView> inputPortElements = new Dictionary<string, OutputTextureView>();
+        protected Dictionary<string, OutputTextureView> inputPortElements = new Dictionary<string, OutputTextureView>();
 
-		public override void Enable(bool fromInspector)
-		{
-			capabilities &= ~Capabilities.Deletable;
+        public override void Enable(bool fromInspector)
+        {
+            capabilities &= ~Capabilities.Deletable;
             outputNode = nodeTarget as OutputNode;
             graph = owner.graph as MixtureGraph;
 
@@ -28,146 +29,156 @@ namespace Mixture
 
             base.Enable(fromInspector);
 
-			if (!fromInspector)
-			{
-				// We don't need the code for removing the material because this node can't be removed
-				foreach (var output in outputNode.outputTextureSettings)
-				{
-					if (output.finalCopyMaterial != null && !owner.graph.IsObjectInGraph(output.finalCopyMaterial))
-					{
-						// Check if the material we have is ours
-						if (owner.graph.IsExternalSubAsset(output.finalCopyMaterial))
+            if (!fromInspector)
+            {
+                // We don't need the code for removing the material because this node can't be removed
+                foreach (var output in outputNode.outputTextureSettings)
+                {
+                    if (output.finalCopyMaterial != null && !owner.graph.IsObjectInGraph(output.finalCopyMaterial))
+                    {
+                        // Check if the material we have is ours
+                        if (owner.graph.IsExternalSubAsset(output.finalCopyMaterial))
                         {
                             output.finalCopyMaterial = new Material(output.finalCopyMaterial);
                             output.finalCopyMaterial.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
                         }
 
-						owner.graph.AddObjectToGraph(output.finalCopyMaterial);
-					}
-				}
+                        owner.graph.AddObjectToGraph(output.finalCopyMaterial);
+                    }
+                }
 
-				outputNode.onTempRenderTextureUpdated += () => {
-					RefreshOutputPortSettings();
-					UpdatePreviewImage();
-				};
-				graph.onOutputTextureUpdated += UpdatePreviewImage;
+                outputNode.onTempRenderTextureUpdated += () =>
+                {
+                    RefreshOutputPortSettings();
+                    UpdatePreviewImage();
+                };
+                graph.onOutputTextureUpdated += UpdatePreviewImage;
 
-				// Clear the input when disconnecting it:
-				onPortDisconnected += port => {
-					var outputSlot = outputNode.outputTextureSettings.Find(o => o.name == port.portData.identifier);
-					if (outputSlot != null)
-						outputSlot.inputTexture = null;
-				};
+                // Clear the input when disconnecting it:
+                onPortDisconnected += port =>
+                {
+                    var outputSlot = outputNode.outputTextureSettings.Find(o => o.name == port.portData.identifier);
+                    if (outputSlot != null)
+                        outputSlot.inputTexture = null;
+                };
 
-				InitializeDebug();
-			}
-		}
+                InitializeDebug();
+            }
+        }
 
-		void RefreshOutputPortSettings()
-		{
-			if (graph.type != MixtureGraphType.Material)
-			{
-				foreach (var view in inputPortElements.Values)
-					view.RefreshSettings();
-			}
-			else
-			{
-				
-			}
-		}
 
-		void UpdatePortView()
-		{
-			foreach (var output in outputNode.outputTextureSettings)
-			{
-				var portView = GetPortViewFromFieldName(nameof(outputNode.outputTextureSettings), output.name);
+        void RefreshOutputPortSettings()
+        {
+            if (graph.type != MixtureGraphType.Material)
+            {
+                foreach (var view in inputPortElements.Values)
+                    view.RefreshSettings();
+            }
+            else
+            {
+            }
+        }
 
-				if (portView == null)
-					continue;
+        void UpdatePortView()
+        {
+            foreach (var output in outputNode.outputTextureSettings)
+            {
+                var portView = GetPortViewFromFieldName(nameof(outputNode.outputTextureSettings), output.name);
 
-				if (!inputPortElements.ContainsKey(output.name))
-				{
-					inputPortElements[output.name] = new OutputTextureView(owner, this, output);
-					inputContainer.Add(inputPortElements[output.name]);
-				}
-				inputPortElements[output.name].MovePort(portView);
-			}
+                if (portView == null)
+                    continue;
 
-			// Remove unused output texture views
-			foreach (var name in inputPortElements.Keys.ToList())
-			{
-				if (!outputNode.outputTextureSettings.Any(o => o.name == name))
-				{
-					inputPortElements[name].RemoveFromHierarchy();
-					inputPortElements.Remove(name);
-				}
-			}
-		}
+                if (!inputPortElements.ContainsKey(output.name))
+                {
+                    inputPortElements[output.name] = new OutputTextureView(owner, this, output);
+                    inputContainer.Add(inputPortElements[output.name]);
+                }
 
-		public override bool RefreshPorts()
-		{
-			bool result = base.RefreshPorts();
-			UpdatePortView();
-			return result;
-		}
+                inputPortElements[output.name].MovePort(portView);
+            }
 
-		protected override VisualElement CreateSettingsView()
-		{
-			var sv = base.CreateSettingsView();
+            // Remove unused output texture views
+            foreach (var name in inputPortElements.Keys.ToList())
+            {
+                if (!outputNode.outputTextureSettings.Any(o => o.name == name))
+                {
+                    inputPortElements[name].RemoveFromHierarchy();
+                    inputPortElements.Remove(name);
+                }
+            }
+        }
 
-			OutputDimension currentDim = nodeTarget.rtSettings.dimension;
-			settingsView.RegisterChangedCallback(() => {
-				// Reflect the changes on the graph output texture but not on the asset to avoid stalls.
-				graph.UpdateOutputTextures();
-				RefreshOutputPortSettings();
+        public override bool RefreshPorts()
+        {
+            bool result = base.RefreshPorts();
+            UpdatePortView();
+            return result;
+        }
 
-				// When the dimension is updated, we need to update all the node ports in the graph
-				var newDim = nodeTarget.rtSettings.dimension;
-				if (currentDim != newDim)
-				{
-					// We delay the port refresh to let the settings finish it's update 
-					schedule.Execute(() =>{ 
-						owner.ProcessGraph();
-						// Refresh ports on all the nodes in the graph
-						foreach (var nodeView in owner.nodeViews)
-						{
-							nodeView.nodeTarget.UpdateAllPortsLocal();
-							nodeView.RefreshPorts();
-						}
-					}).ExecuteLater(1);
-					currentDim = newDim;
-					NodeProvider.LoadGraph(graph);
-				}
-				else
-				{
-					schedule.Execute(() =>{ 
-						owner.ProcessGraph();
-					}).ExecuteLater(1);
-				}
-			});
+        protected override VisualElement CreateSettingsView()
+        {
+            var sv = base.CreateSettingsView();
+            //var paramView = new MixtureMaterialOutputView(this.nodeTarget, this.owner);
+            OutputDimension currentDim = nodeTarget.rtSettings.dimension;
+            settingsView.RegisterChangedCallback(() =>
+            {
+                // Reflect the changes on the graph output texture but not on the asset to avoid stalls.
+                graph.UpdateOutputTextures();
+                RefreshOutputPortSettings();
 
-			return sv;
-		}
+                // When the dimension is updated, we need to update all the node ports in the graph
+                var newDim = nodeTarget.rtSettings.dimension;
+                if (currentDim != newDim)
+                {
+                    // We delay the port refresh to let the settings finish it's update 
+                    schedule.Execute(() =>
+                    {
+                        owner.ProcessGraph();
+                        // Refresh ports on all the nodes in the graph
+                        foreach (var nodeView in owner.nodeViews)
+                        {
+                            nodeView.nodeTarget.UpdateAllPortsLocal();
+                            nodeView.RefreshPorts();
+                        }
+                    }).ExecuteLater(1);
+                    currentDim = newDim;
+                    NodeProvider.LoadGraph(graph);
+                }
+                else
+                {
+                    schedule.Execute(() => { owner.ProcessGraph(); }).ExecuteLater(1);
+                }
+            });
+
+            return sv;
+        }
 
         protected virtual void BuildOutputNodeSettings()
         {
-			controlsContainer.Add(new Button(() => {
-				var addOutputMenu =  new GenericMenu();
-				addOutputMenu.AddItem(new GUIContent("Color"), false, () => AddOutputPreset(OutputTextureSettings.Preset.Color));
-				addOutputMenu.AddItem(new GUIContent("Normal"), false, () => AddOutputPreset(OutputTextureSettings.Preset.Normal));
-				addOutputMenu.AddItem(new GUIContent("Height"), false, () => AddOutputPreset(OutputTextureSettings.Preset.Height));
-				addOutputMenu.AddItem(new GUIContent("Mask (HDRP)"), false, () => AddOutputPreset(OutputTextureSettings.Preset.MaskHDRP));
-				addOutputMenu.AddItem(new GUIContent("Detail (HDRP)"), false, () => AddOutputPreset(OutputTextureSettings.Preset.DetailHDRP));
-				addOutputMenu.AddItem(new GUIContent("Raw (not compressed)"), false, () => AddOutputPreset(OutputTextureSettings.Preset.Raw));
-				// addOutputMenu.AddItem(new GUIContent("Detail (URP)"), false, () => AddOutputPreset(OutputTextureSettings.Preset.DetailURP));
-				addOutputMenu.ShowAsContext();
+            controlsContainer.Add(new Button(() =>
+            {
+                var addOutputMenu = new GenericMenu();
+                addOutputMenu.AddItem(new GUIContent("Color"), false,
+                    () => AddOutputPreset(OutputTextureSettings.Preset.Color));
+                addOutputMenu.AddItem(new GUIContent("Normal"), false,
+                    () => AddOutputPreset(OutputTextureSettings.Preset.Normal));
+                addOutputMenu.AddItem(new GUIContent("Height"), false,
+                    () => AddOutputPreset(OutputTextureSettings.Preset.Height));
+                addOutputMenu.AddItem(new GUIContent("Mask (HDRP)"), false,
+                    () => AddOutputPreset(OutputTextureSettings.Preset.MaskHDRP));
+                addOutputMenu.AddItem(new GUIContent("Detail (HDRP)"), false,
+                    () => AddOutputPreset(OutputTextureSettings.Preset.DetailHDRP));
+                addOutputMenu.AddItem(new GUIContent("Raw (not compressed)"), false,
+                    () => AddOutputPreset(OutputTextureSettings.Preset.Raw));
+                // addOutputMenu.AddItem(new GUIContent("Detail (URP)"), false, () => AddOutputPreset(OutputTextureSettings.Preset.DetailURP));
+                addOutputMenu.ShowAsContext();
 
-				void AddOutputPreset(OutputTextureSettings.Preset preset)
-				{
-					outputNode.AddTextureOutput(preset);
-					ForceUpdatePorts();
-				}
-			}){ text = "Add Output"});
+                void AddOutputPreset(OutputTextureSettings.Preset preset)
+                {
+                    outputNode.AddTextureOutput(preset);
+                    ForceUpdatePorts();
+                }
+            }) {text = "Add Output"});
 
             if (graph.type != MixtureGraphType.Realtime)
             {
@@ -178,43 +189,48 @@ namespace Mixture
             }
         }
 
-		void SaveAllTextures()
-		{
-			graph.SaveAll();
-			graph.UpdateLinkedVariants();
-		}
+        void SaveAllTextures()
+        {
+            graph.SaveAll();
+            graph.UpdateLinkedVariants();
+        }
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
-		{
-			base.BuildContextualMenu(evt);
-			
-			string mode = graph.type == MixtureGraphType.Realtime ? "Static" : "Realtime";
-			evt.menu.AppendSeparator();
-			evt.menu.AppendAction($"Convert Mixture to {mode}", _ => MixtureEditorUtils.ToggleMixtureGraphMode(graph), DropdownMenuAction.AlwaysEnabled);
-		}
+        {
+            base.BuildContextualMenu(evt);
 
-		void InitializeDebug()
-		{
-			var crtList = new VisualElement();
+            string mode = graph.type == MixtureGraphType.Realtime ? "Static" : "Realtime";
+            evt.menu.AppendSeparator();
+            evt.menu.AppendAction($"Convert Mixture to {mode}", _ => MixtureEditorUtils.ToggleMixtureGraphMode(graph),
+                DropdownMenuAction.AlwaysEnabled);
+        }
 
-			outputNode.onProcessed += UpdateCRTList;
+        void InitializeDebug()
+        {
+            var crtList = new VisualElement();
 
-			void UpdateCRTList()
-			{
-				if (crtList.childCount == outputNode.outputTextureSettings.Count)
-					return;
+            outputNode.onProcessed += UpdateCRTList;
 
-				crtList.Clear();
+            void UpdateCRTList()
+            {
+                if (crtList.childCount == outputNode.outputTextureSettings.Count)
+                    return;
 
-				foreach (var output in outputNode.outputTextureSettings)
-				{
-					crtList.Add(new ObjectField(output.name) { objectType = typeof(CustomRenderTexture), value = output.finalCopyRT });
-				}
-			}
+                crtList.Clear();
 
-			debugContainer.Add(crtList);
-		}
+                foreach (var output in outputNode.outputTextureSettings)
+                {
+                    crtList.Add(new ObjectField(output.name)
+                        {objectType = typeof(CustomRenderTexture), value = output.finalCopyRT});
+                }
+            }
 
-		void UpdatePreviewImage() => CreateTexturePreview(previewContainer, outputNode);
-	}
+            debugContainer.Add(crtList);
+        }
+
+        void UpdatePreviewImage()
+        {
+            CreateTexturePreview(previewContainer, outputNode);
+        }
+    }
 }

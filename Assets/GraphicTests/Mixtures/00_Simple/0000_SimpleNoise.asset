@@ -78,8 +78,8 @@ MonoBehaviour:
   exposedParameters: []
   serializedParameterList: []
   stickyNotes: []
-  position: {x: 396, y: 37, z: 0}
-  scale: {x: 0.8695652, y: 0.8695652, z: 1}
+  position: {x: 997, y: 354, z: 0}
+  scale: {x: 1, y: 1, z: 1}
   version: 0
   type: 0
   realtimePreview: 0
@@ -91,7 +91,8 @@ MonoBehaviour:
   - {fileID: 4254244234484223371}
   variants: []
   _mainOutputTexture: {fileID: -8436687840102649035}
-  _outputTextures: []
+  _outputTextures:
+  - {fileID: -8436687840102649035}
   references:
     version: 1
     00000000:
@@ -154,10 +155,10 @@ MonoBehaviour:
         computeOrder: 0
         position:
           serializedVersion: 2
-          x: -249
-          y: 23
+          x: -380.56894
+          y: -24.999973
           width: 250
-          height: 600
+          height: 145
         expanded: 0
         debug: 0
         nodeLock: 0

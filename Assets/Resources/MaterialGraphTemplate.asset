@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b113f958e0564f309164e29c24b042d, type: 3}
+  m_Name: MaterialGraphTemplate
+  m_EditorClassIdentifier: 
+  serializedNodes: []
+  nodes:
+  - id: 0
+  - id: 1
+  edges: []
+  groups: []
+  stackNodes: []
+  pinnedElements: []
+  exposedParameters: []
+  serializedParameterList: []
+  stickyNotes: []
+  position: {x: 0, y: 0, z: 0}
+  scale: {x: 1, y: 1, z: 1}
+  version: 0
+  type: 3
+  realtimePreview: 0
+  isRealtime: 0
+  isParameterViewOpen: 0
+  embedInBuild: 0
+  objectReferences: []
+  variants: []
+  _mainOutputAsset: {fileID: 0}
+  _outputMaterial: {fileID: 0}
+  _outputTextures: []
+  references:
+    version: 1
+    00000000:
+      type: {class: OutputNode, ns: Mixture, asm: Mixture.Runtime}
+      data:
+        GUID: d7ac6c41-3896-4e6a-a71f-d1c11874c4b4
+        computeOrder: -1
+        position:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 100
+          height: 100
+        expanded: 0
+        debug: 0
+        nodeLock: 0
+        rtSettings:
+          widthPercent: 0
+          heightPercent: 0
+          depthPercent: 0
+          width: 0
+          height: 0
+          sliceCount: 0
+          potSize: 1024
+          widthMode: 1
+          heightMode: 1
+          depthMode: 1
+          dimension: 2
+          outputChannels: 1
+          outputPrecision: 3
+          editFlags: 469
+          doubleBuffered: 0
+          wrapMode: 0
+          filterMode: 0
+          refreshMode: 0
+          period: 0
+        isPreviewCollapsed: 0
+        previewMode: 15
+        previewMip: 0
+        previewVisible: 1
+        previewEV100: 0
+        previewSlice: 0
+        isPinned: 0
+        outputTextureSettings: []
+    00000001:
+      type: {class: OutputNode, ns: Mixture, asm: Mixture.Runtime}
+      data:
+        GUID: 
+        computeOrder: -1
+        position:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        expanded: 0
+        debug: 0
+        nodeLock: 0
+        rtSettings:
+          widthPercent: 0
+          heightPercent: 0
+          depthPercent: 0
+          width: 0
+          height: 0
+          sliceCount: 0
+          potSize: 0
+          widthMode: 0
+          heightMode: 0
+          depthMode: 0
+          dimension: 0
+          outputChannels: 0
+          outputPrecision: 0
+          editFlags: 0
+          doubleBuffered: 0
+          wrapMode: 0
+          filterMode: 0
+          refreshMode: 0
+          period: 0
+        isPreviewCollapsed: 0
+        previewMode: 0
+        previewMip: 0
+        previewVisible: 1
+        previewEV100: 0
+        previewSlice: 0
+        isPinned: 0
+        outputTextureSettings: []
