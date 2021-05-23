@@ -18,7 +18,7 @@ namespace Mixture
         protected MixtureGraph graph;
 
         protected Dictionary<string, OutputTextureView> inputPortElements = new Dictionary<string, OutputTextureView>();
-
+        private MaterialEditor previewEditor;
         public override void Enable(bool fromInspector)
         {
             capabilities &= ~Capabilities.Deletable;
@@ -231,6 +231,20 @@ namespace Mixture
         void UpdatePreviewImage()
         {
             CreateTexturePreview(previewContainer, outputNode);
+        }
+
+        protected override void DrawImGUIPreview(MixtureNode node, Rect previewRect, float currentSlice)
+        {
+            if (graph.type != MixtureGraphType.Material)
+                base.DrawImGUIPreview(node, previewRect, currentSlice);
+            else
+            {
+                if(previewEditor == null)
+                    previewEditor = MaterialEditor.CreateEditor(this.graph.outputMaterial) as MaterialEditor;
+                //editor.DrawPreview(previewRect);
+                previewEditor.PropertiesChanged();
+                previewEditor.OnInteractivePreviewGUI(previewRect, GUIStyle.none);
+            }
         }
     }
 }

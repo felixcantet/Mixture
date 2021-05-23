@@ -515,6 +515,36 @@ namespace Mixture
 
         protected void SetMaterialPropertiesFromEdges(List<SerializableEdge> edges, Material material)
         {
+
+            foreach (var item in enableParameters)
+            {
+                
+                if (item.type == ShaderPropertyType.Texture)
+                {
+                    var defaultValue = material.shader.GetPropertyTextureDefaultName(item.index);
+                    material.SetTexture(item.name, defaultValue == "white" ? Texture2D.whiteTexture : Texture2D.blackTexture);
+                }
+
+                else if (item.type == ShaderPropertyType.Float)
+                {
+                    var defaultValue = material.shader.GetPropertyDefaultFloatValue(item.index);
+                    material.SetFloat(item.name, defaultValue);
+                }
+                else
+                {
+                    var defaultValue = material.shader.GetPropertyDefaultVectorValue(item.index);
+                    if(item.type == ShaderPropertyType.Vector)
+                        material.SetVector(item.name, defaultValue);
+                    else
+                    {
+                        material.SetColor(item.name, defaultValue);
+                    }
+                }
+                
+                
+            }
+            
+            
             // Update material settings when processing the graph:
             foreach (var edge in edges)
             {
