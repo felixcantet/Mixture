@@ -207,6 +207,18 @@ namespace Mixture
             get => _settings == null ? _settings = LoadIcon("Icons/Settings") : _settings;
         }
 
+        static Texture2D _settings24;
+        public static Texture2D settingsIcon24
+        {
+            get => _settings24 == null ? _settings24 = LoadIcon("Icons/Settings24") : _settings24;
+        }
+
+        static Texture2D _discordIcon;
+        public static Texture2D discordIcon 
+        {
+            get => _discordIcon == null ? _discordIcon = LoadIcon("Icons/Discord") : _discordIcon;
+        }
+
         public static Vector4 GetChannelsMask(PreviewChannels channels)
         {
             return new Vector4(

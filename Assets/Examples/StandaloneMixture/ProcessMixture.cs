@@ -15,6 +15,8 @@ public class ProcessMixture : MonoBehaviour
 
     public RawImage         image;
 
+    public string outputPath;
+
     void Start()
     {
         var graph = MixtureDatabase.GetGraphFromTexture(graphTexture);
@@ -26,10 +28,10 @@ public class ProcessMixture : MonoBehaviour
         graph.outputNode.mainOutput.enableCompression = false;
 
         // Create the destination texture
-        var settings = graph.outputNode.rtSettings;
+        var settings = graph.outputNode.settings;
         Texture2D destination = new Texture2D(
-            settings.GetWidth(graph),
-            settings.GetHeight(graph),
+            settings.GetResolvedWidth(graph),
+            settings.GetResolvedHeight(graph),
             settings.GetGraphicsFormat(graph),
             TextureCreationFlags.None
         );
@@ -46,7 +48,7 @@ public class ProcessMixture : MonoBehaviour
 
         // Write the file at the target destination
         var bytes = ImageConversion.EncodeToPNG(destination);
-        File.WriteAllBytes("C:\\Users\\Antoine Lelievre\\test.png", bytes);
+        File.WriteAllBytes(outputPath, bytes);
 
         // Reset graph parameters to avoid serialization issues:
         graph.SetParameterValue("Source", null);

@@ -62,7 +62,10 @@ namespace Mixture
 				texturePosY = Mathf.Clamp(texturePosY, 0, node.output.height - 1);
 
 				var a = AsyncGPUReadback.Request(node.output, 0, texturePosX, 1, texturePosY, 1, 0, 1, (data) => {
-					var pixel = data.GetData<Color>()[0];
+					var colors = data.GetData<Color>();
+					if (data.hasError || colors.Length == 0)
+						return;
+					var pixel = colors[0];
 					colorPickerValues.text = $"R: {pixel.r:F3} G: {pixel.g:F3} B: {pixel.b:F3} A: {pixel.a:F3}";
 				});
 				schedule.Execute(() => {
@@ -93,7 +96,7 @@ namespace Mixture
 		protected override void DrawPreviewSettings(Texture texture)
 		{
 			// Try to get the input texture from material:
-			var inputTexture = node.material.GetTextureWithDimension("_Source", node.rtSettings.GetTextureDimension(owner.graph));
+			var inputTexture = node.material.GetTextureWithDimension("_Source", node.settings.GetResolvedTextureDimension(owner.graph));
 
 			EditorGUI.BeginChangeCheck();
 			base.DrawPreviewSettings(inputTexture ?? texture);

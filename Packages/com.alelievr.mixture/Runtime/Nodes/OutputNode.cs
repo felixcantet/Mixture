@@ -21,7 +21,9 @@ namespace Mixture
 
         public event Action onTempRenderTextureUpdated;
 
-        public override string name => "Output Texture Asset";
+		public override string		name => "Output Texture Asset";
+		public override Texture 	previewTexture => graph?.type == MixtureGraphType.Realtime ? graph.mainOutputAsset as Texture : outputTextureSettings.Count > 0 ? outputTextureSettings[0].finalCopyRT : null;
+		public override float		nodeWidth => 350;
 
         public override Texture previewTexture
         {
@@ -51,80 +53,24 @@ namespace Mixture
             }
         }
 
-        public override float nodeWidth => 350;
-
-        // TODO: move this to NodeGraphProcessor
-        [NonSerialized] protected HashSet<string> uniqueMessages = new HashSet<string>();
-
-        //[HideInInspector] public Dictionary<string, bool> enableParameters = new Dictionary<string, bool>(); 
-        [HideInInspector] public List<ShaderPropertyData> enableParameters = new List<ShaderPropertyData>();
-
-        [System.Serializable]
-        public class ShaderPropertyData
+		protected override MixtureSettings defaultSettings
         {
-            public int index;
-            public string name;
-            public string description;
-            public ShaderPropertyType type;
-            public TextureDimension dimension;
-            public bool displayInOutput = false;
-
-            public ShaderPropertyData(Shader shader, int index)
+            get => new MixtureSettings()
             {
-                this.index = index;
-                this.name = shader.GetPropertyName(index);
-                this.description = shader.GetPropertyDescription(index);
-                this.type = shader.GetPropertyType(index);
-                if (this.type == ShaderPropertyType.Texture)
-                {
-                    this.dimension = shader.GetPropertyTextureDimension(index);
-                }
-
-                var flag = shader.GetPropertyFlags(index);
-                if ((flag & ShaderPropertyFlags.MainTexture) != 0 ||
-                    (flag & ShaderPropertyFlags.Normal) != 0 ||
-                    (flag & ShaderPropertyFlags.MainColor) != 0 ||
-                    (flag & ShaderPropertyFlags.MainTexture) != 0)
-                {
-                    this.displayInOutput = true;
-                }
-                else
-                {
-                    this.displayInOutput = false;
-                }
-
-                if ((flag & ShaderPropertyFlags.HideInInspector) != 0)
-                    this.displayInOutput = false;
-            }
-        }
-
-        protected override MixtureRTSettings defaultRTSettings
-        {
-            get => new MixtureRTSettings()
-            {
-                widthMode = OutputSizeMode.Fixed,
-                heightMode = OutputSizeMode.Fixed,
-                depthMode = OutputSizeMode.Fixed,
-                outputChannels = OutputChannel.RGBA,
-                outputPrecision = OutputPrecision.Half,
-                potSize = POTSize._1024,
-                editFlags = EditFlags.POTSize | EditFlags.Width | EditFlags.Height | EditFlags.Depth |
-                            EditFlags.Dimension | EditFlags.TargetFormat
+                sizeMode = OutputSizeMode.Absolute,
+				outputChannels = OutputChannel.RGBA,
+				outputPrecision = OutputPrecision.Half,
+				potSize = POTSize._1024,
+                editFlags = EditFlags.POTSize | EditFlags.Width | EditFlags.Height | EditFlags.Depth | EditFlags.Dimension | EditFlags.TargetFormat | EditFlags.SizeMode
             };
         }
 
         protected override void Enable()
         {
-            // Sanitize the RT Settings for the output node, they must contains only valid information for the output node
-            if (rtSettings.outputChannels == OutputChannel.SameAsOutput)
-                rtSettings.outputChannels = OutputChannel.RGBA;
-            if (rtSettings.outputPrecision == OutputPrecision.SameAsOutput)
-                rtSettings.outputPrecision = OutputPrecision.Half;
-            if (rtSettings.dimension == OutputDimension.SameAsOutput)
-                rtSettings.dimension = OutputDimension.Texture2D;
-            rtSettings.editFlags |= EditFlags.POTSize;
-
-            BuildOutputFromShaderProperties();
+            base.Enable();
+			// Checks that the output have always at least one element:
+			if (outputTextureSettings.Count == 0)
+				AddTextureOutput(OutputTextureSettings.Preset.Color);
 
             // Checks that the output have always at least one element:
             if (outputTextureSettings.Count == 0)
@@ -286,16 +232,14 @@ namespace Mixture
             }
         }
 
-        protected override bool ProcessNode(CommandBuffer cmd)
-        {
-            if (graph == null) // Not good but, waiting to render graph refactor to clean up
-                return false;
-
-            if (graph.mainOutputAsset == null)
-            {
-                Debug.LogError("Output Node can't write to target texture, Graph references a null output texture");
-                return false;
-            }
+			if (graph.mainOutputAsset == null)
+		protected override bool ProcessNode(CommandBuffer cmd)
+		{
+			if (graph.mainOutputAsset == null)
+			{
+				Debug.LogError("Output Node can't write to target texture, Graph references a null output texture");
+				return false;
+			}
 
             UpdateMessages();
 
@@ -309,12 +253,27 @@ namespace Mixture
                         onTempRenderTextureUpdated?.Invoke();
                     output.finalCopyRT = finalCopyRT;
 
-                    // Only the main output CRT is marked as realtime because it's processing will automatically
-                    // trigger the processing of it's graph, and thus all the outputs in the graph.
-                    if (output.isMain)
-                        output.finalCopyRT.updateMode = CustomRenderTextureUpdateMode.Realtime;
-                    else
-                        output.finalCopyRT.updateMode = CustomRenderTextureUpdateMode.OnDemand;
+					UpdateTempRenderTexture(ref output.finalCopyRT, output.hasMipMaps, hideAsset: false);
+					output.finalCopyRT.material = null;
+
+					// Only the main output CRT is marked as realtime because it's processing will automatically
+					// trigger the processing of it's graph, and thus all the outputs in the graph.
+					if (output.isMain)
+						output.finalCopyRT.updateMode = CustomRenderTextureUpdateMode.Realtime;
+					else
+						output.finalCopyRT.updateMode = CustomRenderTextureUpdateMode.OnDemand;
+
+					// Sync output texture properties:
+					output.finalCopyRT.wrapMode = settings.GetResolvedWrapMode(graph);
+					output.finalCopyRT.filterMode = settings.GetResolvedFilterMode(graph);
+					output.finalCopyRT.hideFlags = HideFlags.None;
+				}
+				else
+				{
+					// Update the renderTexture size and format:
+					if (UpdateTempRenderTexture(ref output.finalCopyRT, output.hasMipMaps))
+						onTempRenderTextureUpdated?.Invoke();
+				}
 
                     if (output.finalCopyRT.dimension != rtSettings.GetTextureDimension(graph))
                     {
@@ -370,6 +329,14 @@ namespace Mixture
             }
         }
 
+			var input = targetOutput.inputTexture;
+			if (input != null)
+			{
+				if (input.dimension != settings.GetResolvedTextureDimension(graph))
+				{
+					Debug.LogError("Error: Expected texture type input for the OutputNode is " + settings.GetResolvedTextureDimension(graph) + " but " + input?.dimension + " was provided");
+					return false;
+				}
         bool UpdateFinalCopyMaterial(OutputTextureSettings targetOutput)
         {
             if (targetOutput.finalCopyMaterial == null)
@@ -411,6 +378,10 @@ namespace Mixture
 
             return true;
         }
+		[CustomPortBehavior(nameof(outputTextureSettings))]
+		protected IEnumerable< PortData > ChangeOutputPortType(List< SerializableEdge > edges)
+		{
+			Type displayType = TextureUtils.GetTypeFromDimension(settings.GetResolvedTextureDimension(graph));
 
         [CustomPortBehavior(nameof(outputTextureSettings))]
         protected IEnumerable<PortData> ChangeOutputPortType(List<SerializableEdge> edges)

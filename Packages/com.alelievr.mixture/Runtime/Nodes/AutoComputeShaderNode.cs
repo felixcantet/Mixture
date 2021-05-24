@@ -81,6 +81,7 @@ Note that this node tries to generate input / output based on the declared prope
 
 		public override string	name => computeShader != null ? computeShader.name : "Compute Shader";
 		public override bool    showOpenButton => true;
+        public override bool	isRenamable => true;
 
 		public override string previewTexturePropertyName => previewComputeProperty;
 		protected override string computeShaderResourcePath => resourcePath;
@@ -98,6 +99,7 @@ Note that this node tries to generate input / output based on the declared prope
 
 		protected override void Enable()
 		{
+            base.Enable();
 			if (!String.IsNullOrEmpty(computeShaderResourcePath) && computeShader == null)
 				computeShader = LoadComputeShader(computeShaderResourcePath);
 
@@ -127,9 +129,9 @@ Note that this node tries to generate input / output based on the declared prope
 			}
 			else if (typeof(Texture).IsAssignableFrom(t))
 			{
-				int expectedWidth = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? rtSettings.GetWidth(graph) : (int)desc.textureAllocMode;
-				int expectedHeight = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? rtSettings.GetHeight(graph) : (int)desc.textureAllocMode;
-				int expectedDepth = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? rtSettings.GetDepth(graph) : (int)desc.textureAllocMode;
+				int expectedWidth = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? settings.GetResolvedWidth(graph) : (int)desc.textureAllocMode;
+				int expectedHeight = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? settings.GetResolvedHeight(graph) : (int)desc.textureAllocMode;
+				int expectedDepth = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? settings.GetResolvedDepth(graph) : (int)desc.textureAllocMode;
 
 				RenderTextureDescriptor descriptor = new RenderTextureDescriptor
 				{
@@ -190,9 +192,9 @@ Note that this node tries to generate input / output based on the declared prope
 			if (desc.allocatedTexture != null)
 			{
 				var t = desc.allocatedTexture;
-				int expectedWidth = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? rtSettings.GetWidth(graph) : (int)desc.textureAllocMode;
-				int expectedHeight = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? rtSettings.GetHeight(graph) : (int)desc.textureAllocMode;
-				int expectedDepth = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? rtSettings.GetDepth(graph) : (int)desc.textureAllocMode;
+				int expectedWidth = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? settings.GetResolvedWidth(graph) : (int)desc.textureAllocMode;
+				int expectedHeight = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? settings.GetResolvedHeight(graph) : (int)desc.textureAllocMode;
+				int expectedDepth = desc.textureAllocMode == TextureAllocMode.SameAsOutput ? settings.GetResolvedDepth(graph) : (int)desc.textureAllocMode;
 				if (t.width != expectedWidth || t.height != expectedHeight || t.volumeDepth != expectedDepth)
 				{
 					t.Release();
@@ -314,7 +316,7 @@ Note that this node tries to generate input / output based on the declared prope
             BindManagedResources(kernelIndex);
 
 			cmd.SetComputeVectorParam(computeShader, "_Time", new Vector4(Time.realtimeSinceStartup, Mathf.Sin(Time.realtimeSinceStartup), Mathf.Cos(Time.realtimeSinceStartup), Time.deltaTime));
-			DispatchCompute(cmd, kernelIndex, rtSettings.GetWidth(graph), rtSettings.GetHeight(graph), rtSettings.GetDepth(graph));
+			DispatchCompute(cmd, kernelIndex, settings.GetResolvedWidth(graph), settings.GetResolvedHeight(graph), settings.GetResolvedDepth(graph));
 
             if (!String.IsNullOrEmpty(previewKernel))
             {

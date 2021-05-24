@@ -7,7 +7,6 @@ using UnityEngine.Rendering;
 using UnityEditor.Experimental.GraphView;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.PlayerLoop;
 
 namespace Mixture
 {
@@ -18,7 +17,9 @@ namespace Mixture
         protected MixtureGraph graph;
 
         protected Dictionary<string, OutputTextureView> inputPortElements = new Dictionary<string, OutputTextureView>();
-        private MaterialEditor previewEditor;
+
+        private MaterialEditor editorPreview;
+
         public override void Enable(bool fromInspector)
         {
             capabilities &= ~Capabilities.Deletable;
@@ -66,7 +67,6 @@ namespace Mixture
             }
         }
 
-
         void RefreshOutputPortSettings()
         {
             if (graph.type != MixtureGraphType.Material)
@@ -76,6 +76,7 @@ namespace Mixture
             }
             else
             {
+                
             }
         }
 
@@ -118,8 +119,8 @@ namespace Mixture
         protected override VisualElement CreateSettingsView()
         {
             var sv = base.CreateSettingsView();
-            //var paramView = new MixtureMaterialOutputView(this.nodeTarget, this.owner);
-            OutputDimension currentDim = nodeTarget.rtSettings.dimension;
+
+            OutputDimension currentDim = nodeTarget.settings.dimension;
             settingsView.RegisterChangedCallback(() =>
             {
                 // Reflect the changes on the graph output texture but not on the asset to avoid stalls.
@@ -127,7 +128,7 @@ namespace Mixture
                 RefreshOutputPortSettings();
 
                 // When the dimension is updated, we need to update all the node ports in the graph
-                var newDim = nodeTarget.rtSettings.dimension;
+                var newDim = nodeTarget.settings.dimension;
                 if (currentDim != newDim)
                 {
                     // We delay the port refresh to let the settings finish it's update 
@@ -228,10 +229,7 @@ namespace Mixture
             debugContainer.Add(crtList);
         }
 
-        void UpdatePreviewImage()
-        {
-            CreateTexturePreview(previewContainer, outputNode);
-        }
+        void UpdatePreviewImage() => CreateTexturePreview(previewContainer, outputNode);
 
         protected override void DrawImGUIPreview(MixtureNode node, Rect previewRect, float currentSlice)
         {
@@ -239,11 +237,11 @@ namespace Mixture
                 base.DrawImGUIPreview(node, previewRect, currentSlice);
             else
             {
-                if(previewEditor == null)
-                    previewEditor = MaterialEditor.CreateEditor(this.graph.outputMaterial) as MaterialEditor;
+                if (editorPreview == null)
+                    editorPreview = MaterialEditor.CreateEditor(this.graph.outputMaterial) as MaterialEditor;
                 //editor.DrawPreview(previewRect);
-                previewEditor.PropertiesChanged();
-                previewEditor.OnInteractivePreviewGUI(previewRect, GUIStyle.none);
+                editorPreview.PropertiesChanged();
+                editorPreview.OnInteractivePreviewGUI(previewRect, GUIStyle.none);
             }
         }
     }

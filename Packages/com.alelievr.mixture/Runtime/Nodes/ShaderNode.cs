@@ -31,6 +31,9 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 
 		public static readonly string	DefaultShaderName = "Hidden/Mixture/ShaderNodeDefault";
 
+		public override string	name => (shader != null) ? shader.name.Split('/')?.Last() : "Shader";
+        public override bool	isRenamable => true;
+
 		[Input(name = "In")]
 		public List< object >		materialInputs;
 
@@ -39,7 +42,6 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 
 		[HideInInspector]
 		public Shader			shader;
-		public override string	name => (shader != null) ? shader.name.Split('/')?.Last() : "Shader";
 		[HideInInspector]
 		public Material			material;
 
@@ -69,11 +71,11 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 			}
 		}
 
-		protected override MixtureRTSettings defaultRTSettings
+		protected override MixtureSettings defaultSettings
 		{
 			get
 			{
-                var settings = base.defaultRTSettings;
+                var settings = base.defaultSettings;
                 settings.editFlags = EditFlags.All ^ EditFlags.POTSize;
                 return settings;
 			}
@@ -83,6 +85,7 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 
 		protected override void Enable()
 		{
+            base.Enable();
 			defaultShader = Shader.Find(DefaultShaderName);
 			
 			if (material == null)
@@ -93,6 +96,7 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 			beforeProcessSetup += BeforeProcessSetup;
 
 			UpdateShader();
+			UpdateExposedProperties();
 			UpdateTempRenderTexture(ref output, hasMips: hasMips);
 			output.material = material;
 
@@ -203,8 +207,6 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 				return false;
 			}
 
-			UpdateExposedProperties();
-
 #if UNITY_EDITOR // IsShaderCompiled is editor only
 			if (!IsShaderCompiled(material.shader))
 			{
@@ -248,7 +250,7 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 			if (output == null)
 				return false;
 
-			var outputDimension = rtSettings.GetTextureDimension(graph);
+			var outputDimension = settings.GetResolvedTextureDimension(graph);
 			MixtureUtils.SetupDimensionKeyword(material, outputDimension);
 			var s = material.shader;
 			
@@ -280,7 +282,7 @@ For more information, you can check the [Shader Nodes](../ShaderNodes.md) docume
 
 			output.material = material;
 
-            bool useCustomUV = material.HasTextureBound("_UV", rtSettings.GetTextureDimension(graph));
+            bool useCustomUV = material.HasTextureBound("_UV", settings.GetResolvedTextureDimension(graph));
             material.SetKeywordEnabled("USE_CUSTOM_UV", useCustomUV);
 			return true;
 		}

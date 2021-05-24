@@ -40,7 +40,7 @@ namespace Mixture
                         {
                             Label = "No Label",
                             texture = item.inputTexture,
-                            settings = node.importedGraph.outputNode.rtSettings,
+                            settings = node.importedGraph.outputNode.settings,
                             Name = item.name
                         });
                     }

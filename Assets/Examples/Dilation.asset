@@ -924,8 +924,8 @@ MonoBehaviour:
   exposedParameters: []
   serializedParameterList: []
   stickyNotes: []
-  position: {x: 852, y: 139, z: 0}
-  scale: {x: 0.8695652, y: 0.8695652, z: 1}
+  position: {x: 1246, y: 86, z: 0}
+  scale: {x: 0.7561437, y: 0.7561437, z: 1}
   version: 0
   type: 0
   realtimePreview: 0
@@ -950,6 +950,7 @@ MonoBehaviour:
     00000000:
       type: {class: OutputNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 20aad9a2-f45b-443d-9f30-0287577d108c
         computeOrder: 1
         position:
@@ -1003,6 +1004,7 @@ MonoBehaviour:
     00000001:
       type: {class: CellularNoise, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 92d543ea-1d0b-4a13-bf9a-a4c61ddfdf3b
         computeOrder: 2
         position:
@@ -1146,6 +1148,7 @@ MonoBehaviour:
     00000002:
       type: {class: BlendNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: b3922bf1-eb94-4a15-9eac-06bbbbb02516
         computeOrder: 7
         position:
@@ -1229,6 +1232,7 @@ MonoBehaviour:
     00000003:
       type: {class: RemapNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 420ef7e6-e511-49dc-8428-678c6120fe42
         computeOrder: 5
         position:
@@ -1293,6 +1297,7 @@ MonoBehaviour:
     00000004:
       type: {class: GradientNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 9097a571-4def-421b-8558-10979fce09e5
         computeOrder: 4
         position:
@@ -1364,6 +1369,7 @@ MonoBehaviour:
     00000005:
       type: {class: PerlinNoise, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 8c49c2e6-cce1-48c9-9393-4b197d2ad02d
         computeOrder: 3
         position:
@@ -1471,6 +1477,7 @@ MonoBehaviour:
     00000006:
       type: {class: RectanglesNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 44aa8b44-8be0-4714-b596-3ca011265fbb
         computeOrder: 6
         position:
@@ -1548,6 +1555,7 @@ MonoBehaviour:
     00000007:
       type: {class: Distance, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 3e7de3c4-f999-4e18-93de-0787ab6dbc95
         computeOrder: 0
         position:
