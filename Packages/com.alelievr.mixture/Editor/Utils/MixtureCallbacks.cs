@@ -54,7 +54,7 @@ namespace Mixture
 			var graphItem = ScriptableObject.CreateInstance< MaterialMixtureGraphAction >();
 			// TODO: mixture material icon
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, graphItem,
-                $"New Mixture Material.{Extension}", MixtureUtils.realtimeIcon, null);
+                $"New Mixture Material.{Extension}", MixtureUtils.materialIcon, null);
 		}
 
 		[MenuItem("Assets/Create/Mixture/Variant", false, 100)]

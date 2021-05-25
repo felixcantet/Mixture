@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEngine.Rendering;
 using UnityEngine.Profiling;
 using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.Rendering.Universal;
 
 namespace Mixture
 {
@@ -56,6 +57,8 @@ namespace Mixture
     {
         [Input, SerializeField]
         public List<OutputTextureSettings> outputTextureSettings = new List<OutputTextureSettings>();
+
+        [Input, SerializeField] public List<object> shaderParameters = new List<object>();
 
         public OutputTextureSettings mainOutput => outputTextureSettings[0];
 
@@ -379,11 +382,30 @@ namespace Mixture
             return true;
         }
 
+        [CustomPortInput(nameof(shaderParameters), typeof(object))]
+        protected void SetOutputType(List<SerializableEdge> edges)
+        {
+            foreach (var item in edges)
+            {
+                var prop = enableParameters.FirstOrDefault(x => x.name == item.inputPortIdentifier);
+                if (prop != null)
+                {
+                    var type = GetTypeFromShaderProperty(prop);
+                    if(prop.type == ShaderPropertyType.Color)
+                        item.passThroughBuffer = (Color)item.passThroughBuffer;
+                    if(prop.type == ShaderPropertyType.Vector)
+                        item.passThroughBuffer = (Vector4)item.passThroughBuffer;
+                    if(prop.type == ShaderPropertyType.Float)
+                        item.passThroughBuffer = (float)item.passThroughBuffer;
+                }
+            }
+        }
 
         [CustomPortBehavior(nameof(outputTextureSettings))]
         protected IEnumerable<PortData> ChangeOutputPortType(List<SerializableEdge> edges)
         {
             Type displayType = TextureUtils.GetTypeFromDimension(settings.GetResolvedTextureDimension(graph));
+
             foreach (var output in outputTextureSettings)
             {
                 yield return new PortData
@@ -393,6 +415,39 @@ namespace Mixture
                     identifier = output.name,
                 };
             }
+        }
+
+        [CustomPortBehavior(nameof(shaderParameters))]
+        protected IEnumerable<PortData> GetShaderParametersPorts(List<SerializableEdge> edges)
+        {
+            foreach (var item in enableParameters)
+            {
+                if (item.type == ShaderPropertyType.Texture)
+                    continue;
+
+                if (!item.displayInOutput)
+                    continue;
+
+                yield return new PortData
+                {
+                    displayName = item.name,
+                    displayType = GetTypeFromShaderProperty(item),
+                    identifier = item.name
+                };
+            }
+        }
+
+        Type GetTypeFromShaderProperty(ShaderPropertyData propertyData)
+        {
+            if (propertyData.type == ShaderPropertyType.Color)
+                return typeof(Color);
+            if (propertyData.type == ShaderPropertyType.Float)
+                return typeof(float);
+            if (propertyData.type == ShaderPropertyType.Vector)
+                return typeof(Vector4);
+            if (propertyData.type == ShaderPropertyType.Range)
+                return typeof(float);
+            return typeof(object);
         }
 
         Type TypeFromShaderProperty(ShaderPropertyType type, int index)

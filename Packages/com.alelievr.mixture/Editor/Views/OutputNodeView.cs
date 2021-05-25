@@ -69,7 +69,7 @@ namespace Mixture
 
         void RefreshOutputPortSettings()
         {
-            if (graph.type != MixtureGraphType.Material)
+            if (graph.type != MixtureGraphType.Material || true)
             {
                 foreach (var view in inputPortElements.Values)
                     view.RefreshSettings();
