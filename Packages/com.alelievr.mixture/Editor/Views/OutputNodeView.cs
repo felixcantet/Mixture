@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
@@ -6,6 +7,7 @@ using GraphProcessor;
 using UnityEngine.Rendering;
 using UnityEditor.Experimental.GraphView;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Linq;
 
 namespace Mixture
@@ -20,6 +22,8 @@ namespace Mixture
 
         private MaterialEditor editorPreview;
 
+        public Action OnShaderChange;
+
         public override void Enable(bool fromInspector)
         {
             capabilities &= ~Capabilities.Deletable;
@@ -27,6 +31,23 @@ namespace Mixture
             graph = owner.graph as MixtureGraph;
 
             BuildOutputNodeSettings();
+
+            if (graph.type == MixtureGraphType.Material)
+            {
+                Debug.Log("Register Events");
+                OnShaderChange += () =>
+                {
+                    for(int i = 0; i < outputNode.outputTextureSettings.Count; i++)
+                    {
+                        outputNode.RemoveTextureOutput(outputNode.outputTextureSettings[i]);
+                    }
+                };
+                // OnShaderChange += UpdatePortView;
+                // OnShaderChange += RefreshOutputPortSettings;
+                OnShaderChange += outputNode.UpdatePropertyList;
+                OnShaderChange += outputNode.BuildOutputFromShaderProperties;
+                OnShaderChange += ForceUpdatePorts;
+            }
 
             base.Enable(fromInspector);
 
@@ -67,6 +88,7 @@ namespace Mixture
             }
         }
 
+
         void RefreshOutputPortSettings()
         {
             if (graph.type != MixtureGraphType.Material || true)
@@ -76,7 +98,6 @@ namespace Mixture
             }
             else
             {
-                
             }
         }
 
@@ -242,6 +263,20 @@ namespace Mixture
                 //editor.DrawPreview(previewRect);
                 editorPreview.PropertiesChanged();
                 editorPreview.OnInteractivePreviewGUI(previewRect, GUIStyle.none);
+            }
+        }
+
+        public override void Disable()
+        {
+            base.Disable();
+            if (this.graph.type == MixtureGraphType.Material)
+            {
+                // OnShaderChange -= UpdatePortView;
+                // OnShaderChange -= RefreshOutputPortSettings;
+                OnShaderChange -= outputNode.UpdatePropertyList;
+                OnShaderChange -= outputNode.BuildOutputFromShaderProperties;
+                OnShaderChange -= ForceUpdatePorts;
+                
             }
         }
     }

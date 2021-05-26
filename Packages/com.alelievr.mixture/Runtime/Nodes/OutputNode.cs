@@ -497,10 +497,55 @@ namespace Mixture
             }
         }
 
+        public void UpdatePropertyList()
+        {
+            var newList = new List<ShaderPropertyData>();
+            bool update = false;
+            var count = graph.outputMaterial.shader.GetPropertyCount();
+            if (enableParameters.Count != count)
+                update = true;
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    if (enableParameters[i].name != graph.outputMaterial.shader.GetPropertyName(i))
+                    {
+                        update = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!update)
+                return;
+            
+            
+            for (int i = 0; i < count; i++)
+            {
+                ShaderPropertyData data = new ShaderPropertyData(graph.outputMaterial.shader, i);
+                newList.Add(data);
+            }
+
+            foreach (var item in newList)
+            {
+                var oldData = enableParameters.Where(x => x.name == item.name).FirstOrDefault();
+                if (oldData != null)
+                {
+                    item.displayInOutput = oldData.displayInOutput;
+                }
+            }
+
+            enableParameters = newList;
+
+        }
+
         protected void SetMaterialPropertiesFromEdges(List<SerializableEdge> edges, Material material)
         {
+            UpdatePropertyList();
             foreach (var item in enableParameters)
             {
+                if (!item.displayInOutput)
+                    continue;
                 if (item.type == ShaderPropertyType.Texture)
                 {
                     var defaultValue = material.shader.GetPropertyTextureDefaultName(item.index);
@@ -513,8 +558,10 @@ namespace Mixture
                     var defaultValue = material.shader.GetPropertyDefaultFloatValue(item.index);
                     material.SetFloat(item.name, defaultValue);
                 }
-                else
+                else if(item.type == ShaderPropertyType.Color || item.type == ShaderPropertyType.Vector)
                 {
+                    Debug.Log(material.shader.GetPropertyType(item.index));
+                    //Debug.Log(item.type);
                     var defaultValue = material.shader.GetPropertyDefaultVectorValue(item.index);
                     if (item.type == ShaderPropertyType.Vector)
                         material.SetVector(item.name, defaultValue);
