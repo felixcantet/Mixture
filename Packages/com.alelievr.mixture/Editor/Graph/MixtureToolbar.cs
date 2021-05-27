@@ -116,7 +116,7 @@ namespace Mixture
 
             public override Vector2 GetWindowSize()
             {
-                return new Vector2(width, 124);
+                return new Vector2(width, 1);
             }
 
             public override void OnGUI(Rect rect)
@@ -421,7 +421,7 @@ namespace Mixture
         {
             var rect = EditorWindow.focusedWindow.position;
             rect.xMin = rect.width - SettingsMixturePopupWindow.width;
-            rect.yMin = 21;
+            rect.yMin = 0;
             rect.size = Vector2.zero;
             PopupWindow.Show(rect, new SettingsMixturePopupWindow(graphView));
         }

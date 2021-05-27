@@ -539,7 +539,7 @@ namespace Mixture
 
         }
 
-        protected void SetMaterialPropertiesFromEdges(List<SerializableEdge> edges, Material material)
+        public void SetMaterialPropertiesFromEdges(List<SerializableEdge> edges, Material material)
         {
             UpdatePropertyList();
             foreach (var item in enableParameters)
@@ -550,6 +550,7 @@ namespace Mixture
                         material.SetTexture(item.name, null);
                     continue;
                 }
+                //ResetMaterialPropertyToDefault(graph.outputMaterial, item.name);
                 if (item.type == ShaderPropertyType.Texture)
                 {
                     var defaultValue = material.shader.GetPropertyTextureDefaultName(item.index);
@@ -562,7 +563,7 @@ namespace Mixture
                     var defaultValue = material.shader.GetPropertyDefaultFloatValue(item.index);
                     material.SetFloat(item.name, defaultValue);
                 }
-                else if(item.type == ShaderPropertyType.Color || item.type == ShaderPropertyType.Vector)
+                else if (item.type == ShaderPropertyType.Color || item.type == ShaderPropertyType.Vector)
                 {
 
                     //Debug.Log(item.type);

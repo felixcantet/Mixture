@@ -62,11 +62,8 @@ namespace Mixture
                 // OnShaderChange += RefreshOutputPortSettings;
                 OnShaderChange += outputNode.UpdatePropertyList;
                 OnShaderChange += outputNode.BuildOutputFromShaderProperties;
-                OnShaderChange += () =>
-                {
-                    
-                };
                 OnShaderChange += ForceUpdatePorts;
+                OnShaderChange += () => { outputNode.SetMaterialPropertiesFromEdges(outputNode.GetAllEdges().ToList(), graph.outputMaterial); };
             }
 
             base.Enable(fromInspector);
