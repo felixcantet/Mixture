@@ -39,7 +39,7 @@ namespace Mixture
                 {
                     var mat = new Material(Shader.Find("Hidden/Mixture/HeightBlend"));
                     blendingMaterials.Add(mat);
-                    shaderInputs[i] = new CustomRenderTexture(graph.outputNode.rtSettings.width, graph.outputNode.rtSettings.height) { material = mat };
+                    shaderInputs[i] = new CustomRenderTexture(graph.outputNode.settings.width, graph.outputNode.settings.height) { material = mat };
                 }
 
             }

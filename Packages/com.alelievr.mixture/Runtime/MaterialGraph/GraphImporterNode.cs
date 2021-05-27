@@ -8,7 +8,7 @@ namespace Mixture
     {
         public Texture texture;
         public string Label;
-        public MixtureRTSettings settings;
+        public MixtureSettings settings;
         public string Name;
 
     }
@@ -42,7 +42,7 @@ namespace Mixture
                 {
                     acceptMultipleEdges = true,
                     displayName = outputTexture.Name,
-                    displayType = TextureUtils.GetTypeFromDimension(outputTexture.settings.GetTextureDimension(importedGraph)),
+                    displayType = TextureUtils.GetTypeFromDimension(outputTexture.settings.GetResolvedTextureDimension(importedGraph)),
                     identifier = i.ToString()
                 };
             }

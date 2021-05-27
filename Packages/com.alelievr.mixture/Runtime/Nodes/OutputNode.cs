@@ -135,12 +135,12 @@ namespace Mixture
             }
 
             // Sort Output Settings by index of parameters list
-            this.outputTextureSettings = outputTextureSettings.OrderBy(x =>
-                enableParameters.IndexOf(enableParameters.Find(y => y.name == x.name))
-            ).ToList();
+            //this.outputTextureSettings = outputTextureSettings.OrderBy(x =>
+            //    enableParameters.IndexOf(enableParameters.Find(y => y.name == x.name))
+            //).ToList();
 
-            this.outputTextureSettings.ForEach(x =>
-                Debug.Log($"Index of : {x.name} = {outputTextureSettings.IndexOf(x)}"));
+            //this.outputTextureSettings.ForEach(x =>
+            //    Debug.Log($"Index of : {x.name} = {outputTextureSettings.IndexOf(x)}"));
 
 
             // //this.outputTextureSettings.ForEach(x => this.RemoveTextureOutput(x));
@@ -545,7 +545,11 @@ namespace Mixture
             foreach (var item in enableParameters)
             {
                 if (!item.displayInOutput)
+                {
+                    if (item.type == ShaderPropertyType.Texture)
+                        material.SetTexture(item.name, null);
                     continue;
+                }
                 if (item.type == ShaderPropertyType.Texture)
                 {
                     var defaultValue = material.shader.GetPropertyTextureDefaultName(item.index);
@@ -560,7 +564,7 @@ namespace Mixture
                 }
                 else if(item.type == ShaderPropertyType.Color || item.type == ShaderPropertyType.Vector)
                 {
-                    Debug.Log(material.shader.GetPropertyType(item.index));
+
                     //Debug.Log(item.type);
                     var defaultValue = material.shader.GetPropertyDefaultVectorValue(item.index);
                     if (item.type == ShaderPropertyType.Vector)

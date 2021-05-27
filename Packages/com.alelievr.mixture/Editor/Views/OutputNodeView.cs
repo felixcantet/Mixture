@@ -35,17 +35,37 @@ namespace Mixture
             if (graph.type == MixtureGraphType.Material)
             {
                 Debug.Log("Register Events");
+                
+                OnShaderChange += () =>
+                {
+                    //owner.RemoveEdges();
+                    
+                   for(int i = 0; i < inputPortElements.Values.Count; i++)// item in inputPortElements.Values)
+                    {
+                        var port = inputPortElements.Values.ElementAt(i);
+                        for(int j = 0; j < port.portView.GetEdges().Count; j++)// var edge in port.portView.GetEdges())
+                        {
+                            var edge = port.portView.GetEdges()[j];
+                            owner.DisconnectView(edge);
+                        }
+                    }
+                };
                 OnShaderChange += () =>
                 {
                     for(int i = 0; i < outputNode.outputTextureSettings.Count; i++)
                     {
                         outputNode.RemoveTextureOutput(outputNode.outputTextureSettings[i]);
                     }
+                    outputNode.outputTextureSettings.Clear();
                 };
                 // OnShaderChange += UpdatePortView;
                 // OnShaderChange += RefreshOutputPortSettings;
                 OnShaderChange += outputNode.UpdatePropertyList;
                 OnShaderChange += outputNode.BuildOutputFromShaderProperties;
+                OnShaderChange += () =>
+                {
+                    
+                };
                 OnShaderChange += ForceUpdatePorts;
             }
 

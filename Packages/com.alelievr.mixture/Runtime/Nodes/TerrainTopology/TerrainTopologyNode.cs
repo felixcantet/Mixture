@@ -174,10 +174,10 @@ namespace Mixture
             
             CreateGradients(true);
 
-            rtSettings.outputChannels = OutputChannel.RGBA;
+            settings.outputChannels = OutputChannel.RGBA;
 
-            rtSettings.outputPrecision = OutputPrecision.Full;
-            rtSettings.editFlags = EditFlags.Dimension | EditFlags.Size;
+            settings.outputPrecision = OutputPrecision.Full;
+            settings.editFlags = EditFlags.Dimension | EditFlags.Size;
 
 
             UpdateTempRenderTexture(ref Output);
