@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using GraphProcessor;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using PopupWindow = UnityEditor.PopupWindow;
@@ -169,6 +170,31 @@ namespace Mixture
                 return new Vector2(width, 500);
             }
 
+            Color GetGUIColor(ShaderPropertyData data)
+            {
+                // Color : 0.33 0.8 1 1
+                // Vector : 0.066 0.46 1 1
+                // Float : 0.2 0.2 1 1
+                switch (data.type)
+                {
+                    case ShaderPropertyType.Float:
+                    case ShaderPropertyType.Range:
+                        return new Color(0.2f, 0.2f, 1 ,1);
+                    
+                    case ShaderPropertyType.Texture:
+                        return new Color(1.0f, 0.6f, 0.066f, 1.0f);
+                    
+                    case ShaderPropertyType.Color:
+                        return new Color(0.33f, 0.8f, 1.0f, 1.0f);
+                    
+                    case ShaderPropertyType.Vector:
+                        return new Color(0.066f, 0.46f, 1f, 1f);
+                    
+                }
+
+                return new Color(1.0f, 1.0f, 1.0f, 1.0f);
+            }
+
             public override void OnGUI(Rect rect)
             {
                 var needUpdate = false;
@@ -196,6 +222,10 @@ namespace Mixture
                     var prevValue = graph.outputNode.enableParameters[i].displayInOutput;
 
                     GUILayout.BeginHorizontal();
+                    var color = GUI.contentColor;
+                    GUI.contentColor = GetGUIColor(graph.outputNode.enableParameters[i]);
+                    GUILayout.Label( Styles.improveMixture.image);
+                    GUI.contentColor = color;
                     GUILayout.Label(graph.outputNode.enableParameters[i].description);
                     GUILayout.Space(10);
                     GUILayout.FlexibleSpace();

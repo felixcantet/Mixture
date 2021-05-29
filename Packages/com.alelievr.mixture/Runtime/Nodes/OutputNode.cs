@@ -436,8 +436,8 @@ namespace Mixture
                 };
             }
         }
-
-        Type GetTypeFromShaderProperty(ShaderPropertyData propertyData)
+        // TODO : Put it in utils
+        public Type GetTypeFromShaderProperty(ShaderPropertyData propertyData)
         {
             if (propertyData.type == ShaderPropertyType.Color)
                 return typeof(Color);
@@ -447,6 +447,8 @@ namespace Mixture
                 return typeof(Vector4);
             if (propertyData.type == ShaderPropertyType.Range)
                 return typeof(float);
+            if (propertyData.type == ShaderPropertyType.Texture)
+                return typeof(Texture2D);
             return typeof(object);
         }
 

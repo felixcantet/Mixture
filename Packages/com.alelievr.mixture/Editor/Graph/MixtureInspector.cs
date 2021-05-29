@@ -399,7 +399,8 @@ namespace Mixture
 		protected override void OnEnable()
 		{
 			base.OnEnable();
-			//LoadInspectorFor(typeof(Texture2D), targets);
+			
+			LoadInspectorFor(typeof(Material), targets);
 		}
 
 		public override void DrawPreview(Rect previewArea)

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using GraphProcessor;
 using UnityEngine.Rendering;
@@ -50,11 +51,27 @@ namespace Mixture
 			{
 				this.input = edges[0].passThroughBuffer as Material;
 			}
+
 			if (input == null)
 				return;
-			var texs = input.GetTexturePropertyNames();
-			Debug.Log("TextureName = " + texs[0]);
-			output = input.GetTexture(texs[0]);
+
+			for(int i = 0; i < input.shader.GetPropertyCount(); i++)
+			{
+				if (input.shader.GetPropertyType(i) == ShaderPropertyType.Texture)
+				{
+					if (input.GetTexture(input.shader.GetPropertyName(i)) != null)
+					{
+						output = input.GetTexture(input.shader.GetPropertyName(i));
+						return;
+					}
+				}
+			}
+			//
+			// if (input == null)
+			// 	return;
+			// var texs = input.GetTexturePropertyNames();
+			// Debug.Log("TextureName = " + texs[0]);
+			// output = input.GetTexture(texs[0]);
 		}
     }
 }
