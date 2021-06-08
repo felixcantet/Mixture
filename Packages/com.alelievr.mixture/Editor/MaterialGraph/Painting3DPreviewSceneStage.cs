@@ -25,6 +25,12 @@ namespace Mixture
         {
             Debug.Log("Enable GUI");
             mat = new Material(Shader.Find("Standard"));
+            Tools.hidden = true;
+        }
+
+        private void OnDisable()
+        {
+            Tools.hidden = false;
         }
 
         private void OnSceneGUI()
@@ -34,7 +40,8 @@ namespace Mixture
             //SceneView.lastActiveSceneView.drawGizmos = false;
             SceneView.lastActiveSceneView.LookAt(go.transform.position);
             var pos = Event.current.mousePosition;
-
+            
+            
             if (Event.current.isMouse && Event.current.type == EventType.MouseDown)
             {
                 Debug.Log("Mouse Event");
@@ -94,6 +101,7 @@ namespace Mixture
             test.AddComponent<PaintTarget>();
             
             EditorSceneManager.MoveGameObjectToScene(test, scene);
+
         }
         
         protected override bool OnOpenStage()
