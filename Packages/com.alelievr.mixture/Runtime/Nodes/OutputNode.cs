@@ -21,7 +21,7 @@ namespace Mixture
         public ShaderPropertyType type;
         public TextureDimension dimension;
         public bool displayInOutput = false;
-
+        public object defaultValue;
         public ShaderPropertyData(Shader shader, int index)
         {
             this.index = index;
@@ -107,6 +107,9 @@ namespace Mixture
                     outputTextureSettings.First().isMain = true;
                 }
             }
+            
+            // Initialize preview
+            Debug.Log(this.graph.previewOutputMaterial.shader);
         }
 
         public void BuildOutputFromShaderProperties()
@@ -130,6 +133,7 @@ namespace Mixture
                     {
                         var output = AddTextureOutput(OutputTextureSettings.Preset.Color);
                         output.name = enableParameters[i].name;
+                        
                     }
                 }
             }
@@ -319,7 +323,11 @@ namespace Mixture
                 }
 
                 if (graph.type == MixtureGraphType.Material)
-                    SetMaterialPropertiesFromEdges(GetAllEdges().ToList(), graph.outputMaterial);
+                {
+                    //SetMaterialPropertiesFromEdges(GetAllEdges().ToList(), graph.outputMaterial);
+                    SetMaterialPropertiesFromEdges(GetAllEdges().ToList(), graph.previewOutputMaterial);
+                    
+                }
             }
 
             return true;
@@ -407,7 +415,7 @@ namespace Mixture
             Type displayType = TextureUtils.GetTypeFromDimension(settings.GetResolvedTextureDimension(graph));
 
             foreach (var output in outputTextureSettings)
-            {
+            { 
                 yield return new PortData
                 {
                     displayName = "", // display name is handled by the port settings UI element
@@ -430,7 +438,7 @@ namespace Mixture
 
                 yield return new PortData
                 {
-                    displayName = item.name,
+                    displayName = item.description + " (" + item.name + ")",
                     displayType = GetTypeFromShaderProperty(item),
                     identifier = item.name
                 };

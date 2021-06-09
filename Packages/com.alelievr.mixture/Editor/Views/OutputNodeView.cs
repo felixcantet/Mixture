@@ -9,6 +9,7 @@ using UnityEditor.Experimental.GraphView;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
+using UnityEngine.InputSystem;
 
 namespace Mixture
 {
@@ -35,15 +36,17 @@ namespace Mixture
             if (graph.type == MixtureGraphType.Material)
             {
                 Debug.Log("Register Events");
-                
+
                 OnShaderChange += () =>
                 {
                     //owner.RemoveEdges();
-                    
-                   for(int i = 0; i < inputPortElements.Values.Count; i++)// item in inputPortElements.Values)
+
+                    for (int i = 0; i < inputPortElements.Values.Count; i++) // item in inputPortElements.Values)
                     {
                         var port = inputPortElements.Values.ElementAt(i);
-                        for(int j = 0; j < port.portView.GetEdges().Count; j++)// var edge in port.portView.GetEdges())
+                        for (int j = 0;
+                            j < port.portView.GetEdges().Count;
+                            j++) // var edge in port.portView.GetEdges())
                         {
                             var edge = port.portView.GetEdges()[j];
                             owner.DisconnectView(edge);
@@ -52,10 +55,11 @@ namespace Mixture
                 };
                 OnShaderChange += () =>
                 {
-                    for(int i = 0; i < outputNode.outputTextureSettings.Count; i++)
+                    for (int i = 0; i < outputNode.outputTextureSettings.Count; i++)
                     {
                         outputNode.RemoveTextureOutput(outputNode.outputTextureSettings[i]);
                     }
+
                     outputNode.outputTextureSettings.Clear();
                 };
                 // OnShaderChange += UpdatePortView;
@@ -63,7 +67,13 @@ namespace Mixture
                 OnShaderChange += outputNode.UpdatePropertyList;
                 OnShaderChange += outputNode.BuildOutputFromShaderProperties;
                 OnShaderChange += ForceUpdatePorts;
-                OnShaderChange += () => { outputNode.SetMaterialPropertiesFromEdges(outputNode.GetAllEdges().ToList(), graph.outputMaterial); };
+                OnShaderChange += () =>
+                {
+                    graph.previewOutputMaterial.shader = graph.outputMaterial.shader;
+                    outputNode.SetMaterialPropertiesFromEdges(outputNode.GetAllEdges().ToList(),
+                        graph.previewOutputMaterial);
+                };
+                
             }
 
             base.Enable(fromInspector);
@@ -194,37 +204,86 @@ namespace Mixture
 
         protected virtual void BuildOutputNodeSettings()
         {
-            controlsContainer.Add(new Button(() =>
+            if (graph.type != MixtureGraphType.Material)
             {
-                var addOutputMenu = new GenericMenu();
-                addOutputMenu.AddItem(new GUIContent("Color"), false,
-                    () => AddOutputPreset(OutputTextureSettings.Preset.Color));
-                addOutputMenu.AddItem(new GUIContent("Normal"), false,
-                    () => AddOutputPreset(OutputTextureSettings.Preset.Normal));
-                addOutputMenu.AddItem(new GUIContent("Height"), false,
-                    () => AddOutputPreset(OutputTextureSettings.Preset.Height));
-                addOutputMenu.AddItem(new GUIContent("Mask (HDRP)"), false,
-                    () => AddOutputPreset(OutputTextureSettings.Preset.MaskHDRP));
-                addOutputMenu.AddItem(new GUIContent("Detail (HDRP)"), false,
-                    () => AddOutputPreset(OutputTextureSettings.Preset.DetailHDRP));
-                addOutputMenu.AddItem(new GUIContent("Raw (not compressed)"), false,
-                    () => AddOutputPreset(OutputTextureSettings.Preset.Raw));
-                // addOutputMenu.AddItem(new GUIContent("Detail (URP)"), false, () => AddOutputPreset(OutputTextureSettings.Preset.DetailURP));
-                addOutputMenu.ShowAsContext();
-
-                void AddOutputPreset(OutputTextureSettings.Preset preset)
+                controlsContainer.Add(new Button(() =>
                 {
-                    outputNode.AddTextureOutput(preset);
-                    ForceUpdatePorts();
-                }
-            }) {text = "Add Output"});
+                    var addOutputMenu = new GenericMenu();
+                    addOutputMenu.AddItem(new GUIContent("Color"), false,
+                        () => AddOutputPreset(OutputTextureSettings.Preset.Color));
+                    addOutputMenu.AddItem(new GUIContent("Normal"), false,
+                        () => AddOutputPreset(OutputTextureSettings.Preset.Normal));
+                    addOutputMenu.AddItem(new GUIContent("Height"), false,
+                        () => AddOutputPreset(OutputTextureSettings.Preset.Height));
+                    addOutputMenu.AddItem(new GUIContent("Mask (HDRP)"), false,
+                        () => AddOutputPreset(OutputTextureSettings.Preset.MaskHDRP));
+                    addOutputMenu.AddItem(new GUIContent("Detail (HDRP)"), false,
+                        () => AddOutputPreset(OutputTextureSettings.Preset.DetailHDRP));
+                    addOutputMenu.AddItem(new GUIContent("Raw (not compressed)"), false,
+                        () => AddOutputPreset(OutputTextureSettings.Preset.Raw));
+                    // addOutputMenu.AddItem(new GUIContent("Detail (URP)"), false, () => AddOutputPreset(OutputTextureSettings.Preset.DetailURP));
+                    addOutputMenu.ShowAsContext();
+
+                    void AddOutputPreset(OutputTextureSettings.Preset preset)
+                    {
+                        outputNode.AddTextureOutput(preset);
+                        ForceUpdatePorts();
+                    }
+                }) {text = "Add Output"});
+
+            }
 
             if (graph.type != MixtureGraphType.Realtime)
             {
-                controlsContainer.Add(new Button(SaveAllTextures)
+                controlsContainer.Add(new Button(() =>
+                {
+                    SaveAllTextures();
+                    if (graph.type == MixtureGraphType.Material)
+                    {
+                        MaterialUtils.AssignMaterialPropertiesFromGraph(graph, nodeTarget.GetAllEdges().ToList(), graph.outputMaterial, true);
+                    }
+                    
+                })
                 {
                     text = "Save All"
                 });
+            }
+            if(graph.type == MixtureGraphType.Material)
+            {
+                var shaderSelector = new Button();
+                shaderSelector.text = graph.outputMaterial.shader.name;
+                controlsContainer.Add(shaderSelector);
+                shaderSelector.clicked += () =>
+                {
+                    var shaderDropdown = new ShaderSelectionDropdown(graph.outputMaterial.shader, (object shaderName) =>
+                    {
+                        var shader = Shader.Find(shaderName as string);
+                        if (shader != null)
+                        {
+                            graph.outputMaterial.shader = shader;
+                        }
+
+                        Debug.Log("SHADER CHANGED");
+                        OnShaderChange();
+                        ForceUpdatePorts();
+                        shaderSelector.text = shaderName as string;
+                    });
+                    shaderDropdown.Show(new Rect(Mouse.current.position.ReadValue(), new Vector2(0, 0)));
+                };
+
+                var parameterSelector = new Button();
+                parameterSelector.text = "Select Outputs";
+                parameterSelector.clicked += () =>
+                {
+                    var rect = EditorWindow.focusedWindow.position;
+                    rect.position = Mouse.current.position.ReadValue();
+                    rect.xMin = rect.position.x;//0;//rect.width - MixtureToolbar.ShaderParametersPopupWindow.width;
+                    rect.yMin = rect.position.y;//0;//21;
+                    rect.size = Vector2.zero;
+                    UnityEditor.PopupWindow.Show(rect,
+                        new MixtureToolbar.ShaderParametersPopupWindow(graph, this.owner));
+                };
+                controlsContainer.Add(parameterSelector);
             }
         }
 
@@ -276,7 +335,7 @@ namespace Mixture
             else
             {
                 if (editorPreview == null)
-                    editorPreview = MaterialEditor.CreateEditor(this.graph.outputMaterial) as MaterialEditor;
+                    editorPreview = MaterialEditor.CreateEditor(this.graph.previewOutputMaterial) as MaterialEditor;
                 //editor.DrawPreview(previewRect);
                 editorPreview.PropertiesChanged();
                 editorPreview.OnInteractivePreviewGUI(previewRect, GUIStyle.none);
@@ -293,7 +352,6 @@ namespace Mixture
                 OnShaderChange -= outputNode.UpdatePropertyList;
                 OnShaderChange -= outputNode.BuildOutputFromShaderProperties;
                 OnShaderChange -= ForceUpdatePorts;
-                
             }
         }
     }
