@@ -17,93 +17,32 @@ namespace Mixture
     {
     }
 
-    [System.Serializable]
-    public class PaintableTexture
-    {
-        public string id; // texture name in shader, exemple : _MainTex
-        public RenderTexture runtimeTexture;
-        public RenderTexture paintedTexture;
-
-        public CommandBuffer cb;
-
-        private Material paintInUV;
-
-        public PaintableTexture(Color clearColor, int width, int height, string id, Shader paintInUV, Mesh meshToDraw)
-        {
-            Debug.Log("Created paintable !");
-            this.id = id;
-
-            this.runtimeTexture = new RenderTexture(width, height, 0)
-            {
-                anisoLevel = 0,
-                useMipMap = false,
-                filterMode = FilterMode.Bilinear
-            };
-            this.paintedTexture = new RenderTexture(width, height, 0)
-            {
-                anisoLevel = 0,
-                useMipMap = false,
-                filterMode = FilterMode.Bilinear
-            };
-
-            Graphics.SetRenderTarget(runtimeTexture);
-            GL.Clear(false, true, clearColor);
-            Graphics.SetRenderTarget(paintedTexture);
-            GL.Clear(false, true, clearColor);
-
-            this.paintInUV = new Material(paintInUV);
-            if (!this.paintInUV.SetPass(0))
-                Debug.LogError("Invalid shader pass");
-
-            this.paintInUV.SetTexture("_MainTex", paintedTexture);
-
-            // ====================
-
-            cb = new CommandBuffer();
-            cb.name = "TexturePainting" + id;
-
-
-            cb.SetRenderTarget(runtimeTexture);
-            cb.DrawMesh(meshToDraw, Matrix4x4.identity, this.paintInUV);
-            cb.Blit(runtimeTexture, paintedTexture);
-            
-        }
-
-        public void SetActiveTexture(Camera cam)
-        {
-            cam.AddCommandBuffer(CameraEvent.AfterDepthTexture, cb);
-        }
-
-        public void SetInactiveTexture(Camera cam)
-        {
-            cam.RemoveCommandBuffer(CameraEvent.AfterDepthTexture, cb);
-        }
-
-        public void UpdateShaderParameters(Matrix4x4 localToWorld)
-        {
-            this.paintInUV.SetMatrix("mesh_Object2World", localToWorld);
-        }
-    }
-
     [CustomEditor(typeof(PaintTarget))]
     public class TestPaintGUI : Editor
     {
-        //private int selectedIndex = 0;
-
-        public Material meshMaterial;
         public GameObject meshGO;
-        public Mesh meshToDraw;
-
-        public Shader paintShader;
-
-        public Vector3 mouseWorldPos;
-
-        public Camera camera;
-
-        private PaintableTexture albedo;
-
+        
         private bool isPainting = false;
+        
+        public Shader texturePaint;
+        public Shader extendIslands;
 
+        int prepareUVID = Shader.PropertyToID("_PrepareUV");
+        int positionID = Shader.PropertyToID("_PainterPosition");
+        int hardnessID = Shader.PropertyToID("_Hardness");
+        int strengthID = Shader.PropertyToID("_Strength");
+        int radiusID = Shader.PropertyToID("_Radius");
+        int blendOpID = Shader.PropertyToID("_BlendOp");
+        int colorID = Shader.PropertyToID("_PainterColor");
+        int textureID = Shader.PropertyToID("_MainTex");
+        int uvOffsetID = Shader.PropertyToID("_OffsetUV");
+        int uvIslandsID = Shader.PropertyToID("_UVIslands");
+
+        Material paintMaterial;
+        Material extendMaterial;
+
+        CommandBuffer command;
+        
         private void OnEnable()
         {
             Debug.Log("Enable GUI");
@@ -115,85 +54,109 @@ namespace Mixture
                 return;
 
             meshGO = go;
-            meshToDraw = go.GetComponent<MeshFilter>().sharedMesh;
-            meshMaterial = go.GetComponent<MeshRenderer>().sharedMaterial;
-            //go.GetComponent<MeshRenderer>().enabled = false;
-            camera = SceneView.lastActiveSceneView.camera;
-
-            paintShader = Shader.Find("Unlit/TexturePainting");
-            albedo = new PaintableTexture(Color.white, 1024, 1024, "_MainTex", paintShader, meshToDraw);
-
-            meshMaterial.SetTexture(albedo.id, albedo.runtimeTexture);
             
-            Shader.SetGlobalColor("_BrushColor", Color.cyan);
-        
-            Shader.SetGlobalFloat("_BrushOpacity",21.0f);
-            Shader.SetGlobalFloat("_BrushSize", 25.0f);
-            Shader.SetGlobalFloat("_BrushHardness", 2.75f);
+            texturePaint = Shader.Find("Unlit/TexturePainter");
+            extendIslands = Shader.Find("Unlit/ExtendIslands");
             
-            albedo.SetActiveTexture(camera);
+            paintMaterial = new Material(texturePaint);
+            extendMaterial = new Material(extendIslands);
+            
+            command = new CommandBuffer();
+            command.name = "CommmandBuffer-1";
         }
-
+        
         private void OnDisable()
         {
             Debug.Log("Disable GUI !");
             Tools.hidden = false;
             
-            albedo.cb.Release();
-            albedo.paintedTexture.Release();
-            albedo.runtimeTexture.Release();
+            command.Release();
         }
 
+        public void InitTextures(PaintTarget p)
+        {
+            RenderTexture mask = p.getMask();
+            RenderTexture uvIslands = p.getUVIslands();
+            RenderTexture extend = p.getExtend();
+            RenderTexture support = p.getSupport();
+            Renderer rend = p.getRenderer();
+
+            command.SetRenderTarget(mask);
+            command.SetRenderTarget(extend);
+            command.SetRenderTarget(support);
+
+            paintMaterial.SetFloat(prepareUVID, 1);
+            command.SetRenderTarget(uvIslands);
+            command.DrawRenderer(rend, paintMaterial, 0);
+
+            Graphics.ExecuteCommandBuffer(command);
+            command.Clear();
+        }
+
+        public void Paint(PaintTarget p, Vector3 pos, float radius = 1f, float hardness = .5f, float strength = .5f,
+            Color? color = null)
+        {
+            RenderTexture mask = p.getMask();
+            RenderTexture uvIslands = p.getUVIslands();
+            RenderTexture extend = p.getExtend();
+            RenderTexture support = p.getSupport();
+            Renderer rend = p.getRenderer();
+
+            paintMaterial.SetFloat(prepareUVID, 0);
+            paintMaterial.SetVector(positionID, pos);
+            paintMaterial.SetFloat(hardnessID, hardness);
+            paintMaterial.SetFloat(strengthID, strength);
+            paintMaterial.SetFloat(radiusID, radius);
+            paintMaterial.SetTexture(textureID, support);
+            paintMaterial.SetColor(colorID, color ?? Color.red);
+            extendMaterial.SetFloat(uvOffsetID, p.extendsIslandOffset);
+            extendMaterial.SetTexture(uvIslandsID, uvIslands);
+
+            command.SetRenderTarget(mask);
+            command.DrawRenderer(rend, paintMaterial, 0);
+
+            command.SetRenderTarget(support);
+            command.Blit(mask, support);
+
+            command.SetRenderTarget(extend);
+            command.Blit(mask, extend, extendMaterial);
+
+            Graphics.ExecuteCommandBuffer(command);
+            command.Clear();
+        }
+        
         private void OnSceneGUI()
         {
-            Tools.hidden = true;
             HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
 
             SceneView.lastActiveSceneView.LookAt(meshGO.transform.position);
 
             var mousePos = Event.current.mousePosition;
 
-            albedo.UpdateShaderParameters(meshGO.transform.localToWorldMatrix);
             RaycastHit hit;
-            Ray ray = camera.ScreenPointToRay(new Vector3(mousePos.x, mousePos.y, 0.0f));
-            Vector4 mwp = Vector3.positiveInfinity;
             
-            Debug.Log(ray);
+            Ray ray = HandleUtility.GUIPointToWorldRay(mousePos);
             
-            if (Physics.Raycast(ray, out hit))
+
+            if (meshGO.GetComponent<MeshCollider>().Raycast(ray, out hit, 10000.0f)) //Physics.Raycast(ray, out hit))
             {
-                if (hit.collider.gameObject.tag.Contains("PaintObject"))
+                Debug.Log("Hit obj => " + hit.collider.gameObject.name);
+                if (hit.collider.gameObject.TryGetComponent<PaintTarget>(out PaintTarget p) && isPainting)
                 {
-                    Debug.Log("Hit obj => " + hit.collider.gameObject.name);
-                    mwp = hit.point;
+                    Paint(p, hit.point, 0.2f, 0.5f, 0.5f, Color.cyan);
                 }
             }
+            else
+            {
+                Debug.Log("Dont hit");
+            }
 
-            mwp.w = 0;
 
             if (Event.current.isMouse)
             {
-                isPainting = Event.current.type == EventType.MouseDown
-                    ? true
-                    : Event.current.type == EventType.MouseUp
-                        ? false
-                        : isPainting && Event.current.type != EventType.MouseUp
-                            ? true
-                            : false;
-
-                if (isPainting)
-                    mwp.w = 1;
-                
-                Debug.Log("Is painting = " + isPainting);
+                isPainting = Event.current.type == EventType.MouseDown;
             }
-            
-            Debug.Log(mwp);
-            
-            mouseWorldPos = mwp;
-            Shader.SetGlobalVector("_Mouse", mwp);
-            
-            Graphics.ExecuteCommandBuffer(albedo.cb);
-            
+
             // Handles.BeginGUI();
             // selectedIndex = GUILayout.Toolbar(selectedIndex,
             //     new GUIContent[]
@@ -246,7 +209,7 @@ namespace Mixture
             MeshRenderer rd = test.AddComponent<MeshRenderer>();
             rd.sharedMaterial = refMat;
 
-            test.AddComponent<PaintTarget>();
+            var pt = test.AddComponent<PaintTarget>();
 
             test.AddComponent<MeshCollider>();
 
