@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 [ExecuteInEditMode]
 public class PaintTarget : MonoBehaviour
 {
@@ -12,10 +13,10 @@ public class PaintTarget : MonoBehaviour
     
     public float extendsIslandOffset = 1.0f;
 
-    private RenderTexture extendIslandsRenderTexture;
-    private RenderTexture uvIslandsRenderTexture;
-    private RenderTexture maskRenderTexture;
-    private RenderTexture supportTexture;
+    public RenderTexture extendIslandsRenderTexture;
+    public RenderTexture uvIslandsRenderTexture;
+    public RenderTexture maskRenderTexture;
+    public RenderTexture supportTexture;
 
     private Renderer rd;
     
@@ -31,30 +32,21 @@ public class PaintTarget : MonoBehaviour
     {
         Debug.Log($"Paint Target {gameObject.name} Start()");
         
-        maskRenderTexture = new RenderTexture(TEXTURE_SIZE, TEXTURE_SIZE, 0);
-        maskRenderTexture.filterMode = FilterMode.Bilinear;
-
-        extendIslandsRenderTexture = new RenderTexture(TEXTURE_SIZE, TEXTURE_SIZE, 0);
-        extendIslandsRenderTexture.filterMode = FilterMode.Bilinear;
-
-        uvIslandsRenderTexture = new RenderTexture(TEXTURE_SIZE, TEXTURE_SIZE, 0);
-        uvIslandsRenderTexture.filterMode = FilterMode.Bilinear;
-
-        supportTexture = new RenderTexture(TEXTURE_SIZE, TEXTURE_SIZE, 0);
-        supportTexture.filterMode =  FilterMode.Bilinear;
+        
 
         rd = GetComponent<Renderer>();
-        rd.sharedMaterial.SetTexture(maskTextureID, extendIslandsRenderTexture);
+       // rd.sharedMaterial.SetTexture(maskTextureID, extendIslandsRenderTexture);
     }
     
     void OnDestroy()
     {
         Debug.Log($"Paint Target {gameObject.name} OnDestroy()");
 
-        maskRenderTexture.Release();
-        uvIslandsRenderTexture.Release();
-        extendIslandsRenderTexture.Release();
-        supportTexture.Release();
+        //maskRenderTexture.Release();
+        //uvIslandsRenderTexture.Release();
+        //extendIslandsRenderTexture.Release();
+        //supportTexture.Release();
     }
-    
+
+
 }

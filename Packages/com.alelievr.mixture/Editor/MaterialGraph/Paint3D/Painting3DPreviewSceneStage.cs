@@ -80,8 +80,8 @@ namespace Mixture
             }
             
             paintColors = new Color[6];
-            paintColors[0] = Color.cyan;
-            paintColors[1] = Color.red;
+            paintColors[0] = Color.black;
+            paintColors[1] = Color.white;
             paintColors[2] = Color.blue;
             paintColors[3] = Color.yellow;
             paintColors[4] = Color.magenta;
@@ -189,6 +189,8 @@ namespace Mixture
             Handles.EndGUI();
             
             SceneView.RepaintAll();
+
+            Handles.DrawWireArc(hit.point, hit.normal, Vector3.up, 360, 0.1f);
         }
     }
 
@@ -199,7 +201,9 @@ namespace Mixture
         // Les instanciers au moment du Show Window
         // Besoins de les delete ?
 
-        public static void ShowWindow(Mesh m, Material refMat, IEnumerable<Material> materialsPalette)
+        public static void ShowWindow(Mesh m, Material refMat, IEnumerable<Material> materialsPalette, 
+            RenderTexture extendIslandsRenderTexture, RenderTexture uvIslandsRenderTexture, RenderTexture maskRenderTexture,
+            RenderTexture supportTexture)
         {
             var inst = CreateInstance<Painting3DPreviewSceneStage>();
             inst.scene = EditorSceneManager.NewPreviewScene();
@@ -211,7 +215,7 @@ namespace Mixture
                 return;
             }
             
-            inst.SetupScene(m, refMat, materialsPalette.ToList());
+            inst.SetupScene(m, refMat, materialsPalette.ToList(), extendIslandsRenderTexture, uvIslandsRenderTexture, maskRenderTexture, supportTexture);
         }
 
         protected override GUIContent CreateHeaderContent()
@@ -219,7 +223,9 @@ namespace Mixture
             return new GUIContent("Painting 3D Stage");
         }
 
-        private void SetupScene(Mesh m, Material refMat, List<Material> materialsPalette)
+        private void SetupScene(Mesh m, Material refMat, List<Material> materialsPalette,
+            RenderTexture extendIslandsRenderTexture, RenderTexture uvIslandsRenderTexture, RenderTexture maskRenderTexture,
+            RenderTexture supportTexture)
         {
             // Instantiate a default Light
             GameObject lightingObj = new GameObject("Directional Light");
@@ -241,7 +247,11 @@ namespace Mixture
 
             var pt = test.AddComponent<PaintTarget>();
             pt.materialsPalette = materialsPalette;
-            
+            pt.extendIslandsRenderTexture = extendIslandsRenderTexture;
+            pt.maskRenderTexture = maskRenderTexture;
+            pt.supportTexture = supportTexture;
+            pt.uvIslandsRenderTexture = uvIslandsRenderTexture;
+
             test.AddComponent<MeshCollider>();
 
             EditorSceneManager.MoveGameObjectToScene(test, scene);
