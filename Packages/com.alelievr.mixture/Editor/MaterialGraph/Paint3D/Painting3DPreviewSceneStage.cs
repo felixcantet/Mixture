@@ -21,6 +21,7 @@ namespace Mixture
     [CustomEditor(typeof(PaintTarget))]
     public class PaintTargetGUI : Editor
     {
+        private int selectedIndex;
         public GameObject meshGO;
         public Collider col;
 
@@ -44,13 +45,19 @@ namespace Mixture
         Material extendMaterial;
 
         CommandBuffer command;
+
+        private GUIContent[] guiContents;
+        private PaintTarget paintTarget;
+
+        private Color[] paintColors;
         
         private void OnEnable()
         {
             Debug.Log("Enable GUI");
             Tools.hidden = true;
 
-            var go = (target as PaintTarget).gameObject;
+            paintTarget = (target as PaintTarget);
+            var go = paintTarget.gameObject;
 
             if (go == null)
                 return;
@@ -65,6 +72,21 @@ namespace Mixture
             
             command = new CommandBuffer();
             command.name = "CommmandBuffer-1";
+            
+            guiContents = new GUIContent[paintTarget.materialsPalette.Count];
+            for (int i = 0; i < guiContents.Length; i++)
+            {
+                guiContents[i] = new GUIContent(AssetPreview.GetAssetPreview(paintTarget.materialsPalette[i]));
+            }
+            
+            paintColors = new Color[6];
+            paintColors[0] = Color.cyan;
+            paintColors[1] = Color.red;
+            paintColors[2] = Color.blue;
+            paintColors[3] = Color.yellow;
+            paintColors[4] = Color.magenta;
+            paintColors[5] = Color.green;
+            
         }
         
         private void OnDisable()
@@ -145,7 +167,7 @@ namespace Mixture
                 //Debug.Log("Hit obj => " + hit.collider.gameObject.name);
                 if (hit.collider.gameObject.TryGetComponent<PaintTarget>(out PaintTarget p) && isPainting)
                 {
-                    Paint(p, hit.point, 0.2f, 1.0f, 0.5f, Color.cyan);
+                    Paint(p, hit.point, 0.1f, 0.5f, 0.5f, paintColors[selectedIndex]);
                 }
             }
             else
@@ -160,14 +182,11 @@ namespace Mixture
                 Debug.Log($"Is Painting = {isPainting}");
             }
 
-            // Handles.BeginGUI();
-            // selectedIndex = GUILayout.Toolbar(selectedIndex,
-            //     new GUIContent[]
-            //     {
-            //         new GUIContent(AssetPreview.GetAssetPreview(mat)), new GUIContent("X"), new GUIContent("B"),
-            //         MixtureToolbar.Styles.settingsIcon
-            //     }, GUI.skin.button, GUILayout.Width(50 * 4), GUILayout.Height(50));
-            // Handles.EndGUI();
+            Handles.BeginGUI();
+            selectedIndex = GUILayout.Toolbar(selectedIndex,
+                guiContents, GUI.skin.button, 
+                GUILayout.Width(50 * guiContents.Length), GUILayout.Height(50));
+            Handles.EndGUI();
             
             SceneView.RepaintAll();
         }
@@ -185,8 +204,12 @@ namespace Mixture
             var inst = CreateInstance<Painting3DPreviewSceneStage>();
             inst.scene = EditorSceneManager.NewPreviewScene();
             StageUtility.GoToStage(inst, true);
-            
-            
+
+            if (materialsPalette == null)
+            {
+                Debug.LogError("Materials Palette is null");
+                return;
+            }
             
             inst.SetupScene(m, refMat, materialsPalette.ToList());
         }
