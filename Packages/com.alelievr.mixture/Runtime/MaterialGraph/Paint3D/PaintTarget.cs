@@ -8,6 +8,8 @@ public class PaintTarget : MonoBehaviour
 {
     private const int TEXTURE_SIZE = 1024;
 
+    public List<Material> materialsPalette = new List<Material>();
+    
     public float extendsIslandOffset = 1.0f;
 
     private RenderTexture extendIslandsRenderTexture;

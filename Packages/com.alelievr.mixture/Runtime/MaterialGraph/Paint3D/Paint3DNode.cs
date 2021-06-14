@@ -17,8 +17,8 @@ namespace Mixture
         [Input(name = "Reference Material")] 
         public Material refMat;
         
-        [Input]
-        public IEnumerable<Material> palette;
+        [Input(name = "Materials Palette")]
+        public IEnumerable<Material> materialsPalette;
         
         [Output(name = "Out Material")]
         public Material outMaterial; // Je sais pas on out quoi par contre
@@ -27,16 +27,16 @@ namespace Mixture
         public override bool 	hasSettings => false;
         public override string	name => "Paint 3D";
         
-        [CustomPortBehavior(nameof(palette))]
+        [CustomPortBehavior(nameof(materialsPalette))]
         IEnumerable< PortData > GetPortsForInputs(List< SerializableEdge > edges)
         {
             yield return new PortData{ displayName = "In ", displayType = typeof(Material), acceptMultipleEdges = true};
         }
 
-        [CustomPortInput(nameof(palette), typeof(Material), allowCast = true)]
+        [CustomPortInput(nameof(materialsPalette), typeof(Material), allowCast = true)]
         public void GetInputs(List< SerializableEdge > edges)
         {
-            palette = edges.Select(e => (Material)e.passThroughBuffer);
+            materialsPalette = edges.Select(e => (Material)e.passThroughBuffer);
         }
         
         [CustomPortOutput(nameof(outMaterial), typeof(Material))]

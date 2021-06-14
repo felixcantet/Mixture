@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.EditorTools;
 using UnityEditor.Graphs;
@@ -18,10 +19,11 @@ namespace Mixture
     }
 
     [CustomEditor(typeof(PaintTarget))]
-    public class TestPaintGUI : Editor
+    public class PaintTargetGUI : Editor
     {
         public GameObject meshGO;
-        
+        public Collider col;
+
         private bool isPainting = false;
         
         public Shader texturePaint;
@@ -54,7 +56,7 @@ namespace Mixture
                 return;
 
             meshGO = go;
-            
+            col = meshGO.GetComponent<Collider>();
             texturePaint = Shader.Find("Unlit/TexturePainter");
             extendIslands = Shader.Find("Unlit/ExtendIslands");
             
@@ -138,12 +140,12 @@ namespace Mixture
             Ray ray = HandleUtility.GUIPointToWorldRay(mousePos);
             
 
-            if (meshGO.GetComponent<MeshCollider>().Raycast(ray, out hit, 10000.0f)) //Physics.Raycast(ray, out hit))
+            if (col.Raycast(ray, out hit, 10000.0f))
             {
-                Debug.Log("Hit obj => " + hit.collider.gameObject.name);
+                //Debug.Log("Hit obj => " + hit.collider.gameObject.name);
                 if (hit.collider.gameObject.TryGetComponent<PaintTarget>(out PaintTarget p) && isPainting)
                 {
-                    Paint(p, hit.point, 0.2f, 0.5f, 0.5f, Color.cyan);
+                    Paint(p, hit.point, 0.2f, 1.0f, 0.5f, Color.cyan);
                 }
             }
             else
@@ -154,7 +156,8 @@ namespace Mixture
 
             if (Event.current.isMouse)
             {
-                isPainting = Event.current.type == EventType.MouseDown;
+                isPainting = (Event.current.type == EventType.MouseDown && Event.current.button == 0 && !isPainting || (Event.current.type != EventType.MouseUp || Event.current.button != 0 || !isPainting) && (isPainting ? true : false));
+                Debug.Log($"Is Painting = {isPainting}");
             }
 
             // Handles.BeginGUI();
@@ -165,6 +168,8 @@ namespace Mixture
             //         MixtureToolbar.Styles.settingsIcon
             //     }, GUI.skin.button, GUILayout.Width(50 * 4), GUILayout.Height(50));
             // Handles.EndGUI();
+            
+            SceneView.RepaintAll();
         }
     }
 
@@ -175,13 +180,15 @@ namespace Mixture
         // Les instanciers au moment du Show Window
         // Besoins de les delete ?
 
-        public static void ShowWindow(Mesh m, Material refMat)
+        public static void ShowWindow(Mesh m, Material refMat, IEnumerable<Material> materialsPalette)
         {
             var inst = CreateInstance<Painting3DPreviewSceneStage>();
             inst.scene = EditorSceneManager.NewPreviewScene();
             StageUtility.GoToStage(inst, true);
-
-            inst.SetupScene(m, refMat);
+            
+            
+            
+            inst.SetupScene(m, refMat, materialsPalette.ToList());
         }
 
         protected override GUIContent CreateHeaderContent()
@@ -189,7 +196,7 @@ namespace Mixture
             return new GUIContent("Painting 3D Stage");
         }
 
-        private void SetupScene(Mesh m, Material refMat)
+        private void SetupScene(Mesh m, Material refMat, List<Material> materialsPalette)
         {
             // Instantiate a default Light
             GameObject lightingObj = new GameObject("Directional Light");
@@ -210,7 +217,8 @@ namespace Mixture
             rd.sharedMaterial = refMat;
 
             var pt = test.AddComponent<PaintTarget>();
-
+            pt.materialsPalette = materialsPalette;
+            
             test.AddComponent<MeshCollider>();
 
             EditorSceneManager.MoveGameObjectToScene(test, scene);

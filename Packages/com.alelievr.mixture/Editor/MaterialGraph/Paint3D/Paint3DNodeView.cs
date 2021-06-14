@@ -27,7 +27,7 @@ namespace Mixture
                     if (node.refMat == null)
                         return;
                     
-                    Painting3DPreviewSceneStage.ShowWindow(node.inMesh, node.refMat);
+                    Painting3DPreviewSceneStage.ShowWindow(node.inMesh, node.refMat, node.materialsPalette);
                     
                 });
             button.name = "Open 3D Paiting";
