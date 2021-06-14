@@ -41,13 +41,15 @@ namespace Mixture
             this.supportTexture = new RenderTexture(maskRenderTexture.descriptor);
         }
 
+        public int frame = 0;
+        
         protected override bool ProcessNode(CommandBuffer cmd)
         {
             if (!base.ProcessNode(cmd))
                 return false;
 
             // Convert Mask to Material
-            if (materialsPalette == null || materialsPalette.Count() == 0)
+            if (materialsPalette == null || materialsPalette.Count() < 2)
                 return false;
 
             if (outMaterial == null || outMaterial.shader != materialsPalette.First().shader)
@@ -58,13 +60,23 @@ namespace Mixture
             }
             //InitializeCrts();
 
-            for (int i = 0; i < outMaterial.shader.GetPropertyCount(); i++)
-            {
-                if (outMaterial.shader.GetPropertyType(i) == ShaderPropertyType.Texture)
-                {
-                }
-            }
+            // for (int i = 0; i < outMaterial.shader.GetPropertyCount(); i++)
+            // {
+            //     if (outMaterial.shader.GetPropertyType(i) == ShaderPropertyType.Texture)
+            //     {
+            //     }
+            // }
 
+            // frame++;
+            //
+            // if (frame >= 120)
+            // {
+            //     frame = 0;
+            //     InitializeCrts();
+            //     
+            //     Debug.Log("Frame updated");
+            // }
+            
             // Assign Texture to material
 
             return true;
@@ -77,8 +89,10 @@ namespace Mixture
                 AddMessage("Paint Node should have 2 materials", NodeMessageType.Error);
                 return;
             }
+            
             if (outMaterial == null)
                 outMaterial = new Material(materialsPalette.First().shader);
+            
             ///Debug.Log("Test");
             //for (int i = 0; i < materialsPalette.Count(); i++)
             //{
@@ -93,7 +107,9 @@ namespace Mixture
             {
                 item.Release();
             }
-
+            
+            crts.Clear();
+            
             var propList = new List<ShaderPropertyData>();
             for (int i = 0; i < outMaterial.shader.GetPropertyCount(); i++)
                 propList.Add(new ShaderPropertyData(outMaterial.shader, i));
@@ -104,12 +120,17 @@ namespace Mixture
                 {
                     if (outMaterial.shader.GetPropertyTextureDimension(item.index) != TextureDimension.Tex2D)
                         continue;
+                    
+                    if(item.name.Contains("_Detail"))
+                        continue;
+                    
                     var crt = new CustomRenderTexture(graph.settings.width, graph.settings.height);
                     crt.material = new Material(Shader.Find("Hidden/Mixture/MixtureLerpTexture"));
                     crt.material.SetTexture("_Mask", extendIslandRenderTexture);
                     crt.material.SetTexture("_MatA", materialsPalette.ElementAt(0).GetTexture(item.name));
                     crt.material.SetTexture("_MatB", materialsPalette.ElementAt(1).GetTexture(item.name));
                     crt.name = item.name;
+                    
                     crts.Add(crt);
                 }
 
@@ -121,8 +142,12 @@ namespace Mixture
                 {
                     if (outMaterial.shader.GetPropertyTextureDimension(item.index) != TextureDimension.Tex2D)
                         continue;
+                    
+                    if(item.name.Contains("_Detail"))
+                        continue;
+                    
                     Debug.Log("Assign : " + item.name);
-                    outMaterial.SetTexture(item.name, crts.Find(x => x.name == item.name));
+                    outMaterial.SetTexture(item.name, crts.Find(x => x.name.Equals(item.name)));
                 }
             }
         }
@@ -149,6 +174,7 @@ namespace Mixture
         {
             if (crts == null)
                 crts = new List<CustomRenderTexture>();
+            
             foreach (var item in crts)
             {
                 yield return item;

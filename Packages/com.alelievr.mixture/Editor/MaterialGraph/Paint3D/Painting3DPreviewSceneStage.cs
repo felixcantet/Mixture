@@ -21,7 +21,11 @@ namespace Mixture
     [CustomEditor(typeof(PaintTarget))]
     public class PaintTargetGUI : Editor
     {
-        private int selectedIndex;
+        // GUI
+        private int selectedMaterial = 0;
+        private float paintRadius = 0.1f;
+        
+        
         public GameObject meshGO;
         public Collider col;
 
@@ -167,7 +171,7 @@ namespace Mixture
                 //Debug.Log("Hit obj => " + hit.collider.gameObject.name);
                 if (hit.collider.gameObject.TryGetComponent<PaintTarget>(out PaintTarget p) && isPainting)
                 {
-                    Paint(p, hit.point, 0.1f, 0.5f, 0.5f, paintColors[selectedIndex]);
+                    Paint(p, hit.point, paintRadius, 0.5f, 0.5f, paintColors[selectedMaterial]);
                 }
             }
             else
@@ -183,9 +187,10 @@ namespace Mixture
             }
 
             Handles.BeginGUI();
-            selectedIndex = GUILayout.Toolbar(selectedIndex,
+            selectedMaterial = GUILayout.Toolbar(selectedMaterial,
                 guiContents, GUI.skin.button, 
                 GUILayout.Width(50 * guiContents.Length), GUILayout.Height(50));
+            paintRadius = GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
             Handles.EndGUI();
             
             SceneView.RepaintAll();
@@ -237,7 +242,7 @@ namespace Mixture
 
             // Instantiate Mesh
             GameObject test = new GameObject("Preview");
-            test.tag = "PaintObject";
+            //test.tag = "PaintObject";
 
             MeshFilter mf = test.AddComponent<MeshFilter>();
             mf.sharedMesh = m;
