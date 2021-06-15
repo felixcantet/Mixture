@@ -38,7 +38,7 @@ namespace Mixture
 
         int prepareUVID = Shader.PropertyToID("_PrepareUV");
         int positionID = Shader.PropertyToID("_PainterPosition");
-        int paintUVID = Shader.PropertyToID("_PainterUV");
+        //int paintUVID = Shader.PropertyToID("_PainterUV");
         int hardnessID = Shader.PropertyToID("_Hardness");
         int strengthID = Shader.PropertyToID("_Strength");
         int radiusID = Shader.PropertyToID("_Radius");
@@ -86,13 +86,13 @@ namespace Mixture
                 guiContents[i] = new GUIContent(AssetPreview.GetAssetPreview(paintTarget.materialsPalette[i]));
             }
             
-            paintColors = new Color[6];
+            paintColors = new Color[2];
             paintColors[0] = Color.black;
             paintColors[1] = Color.white;
-            paintColors[2] = Color.blue;
-            paintColors[3] = Color.yellow;
-            paintColors[4] = Color.magenta;
-            paintColors[5] = Color.green;
+            // paintColors[2] = Color.blue;
+            // paintColors[3] = Color.yellow;
+            // paintColors[4] = Color.magenta;
+            // paintColors[5] = Color.green;
             
         }
         
@@ -124,7 +124,7 @@ namespace Mixture
             command.Clear();
         }
 
-        public void Paint(PaintTarget p, Vector3 pos, Vector2 texCoordAtPos, float radius = 1f, float hardness = .5f, float strength = .5f,
+        public void Paint(PaintTarget p, Vector3 pos/*, Vector2 texCoordAtPos*/, float radius = 1f, float hardness = .5f, float strength = .5f,
             Color? color = null)
         {
             RenderTexture mask = p.getMask();
@@ -135,7 +135,7 @@ namespace Mixture
 
             paintMaterial.SetFloat(prepareUVID, 0);
             paintMaterial.SetVector(positionID, pos);
-            paintMaterial.SetVector(paintUVID, texCoordAtPos);
+            //paintMaterial.SetVector(paintUVID, texCoordAtPos);
             paintMaterial.SetFloat(hardnessID, hardness);
             paintMaterial.SetFloat(strengthID, strength);
             paintMaterial.SetFloat(radiusID, radius);
@@ -175,7 +175,8 @@ namespace Mixture
                 //Debug.Log("Hit obj => " + hit.collider.gameObject.name);
                 if (hit.collider.gameObject.TryGetComponent<PaintTarget>(out PaintTarget p) && isPainting)
                 {
-                    Paint(p, hit.point, hit.textureCoord, paintRadius, paintHardness, paintStrength, paintColors[selectedMaterial]);
+                    //Paint(p, hit.point, hit.textureCoord, paintRadius, paintHardness, paintStrength, paintColors[selectedMaterial]);
+                    Paint(p, hit.point, paintRadius, paintHardness, paintStrength, paintColors[selectedMaterial]);
                 }
             }
             else

@@ -3,10 +3,6 @@ Shader "Unlit/TexturePainter"
     Properties
     {
         _PainterColor ("Painter Color", Color) = (0, 0, 0, 0)
-        
-        _BrushTexture ("Brush", 2D) = "white"
-        _BrushScale ("BrushScale", float) = 0.1
-        _BrushRotate("BrushRotate", float) = 0.0
     }
 
     SubShader
@@ -35,7 +31,6 @@ Shader "Unlit/TexturePainter"
             // -----
             
             float3 _PainterPosition;
-            float2 _PainterUV;
             float _Radius;
             float _Hardness;
             float _Strength;
@@ -55,44 +50,18 @@ Shader "Unlit/TexturePainter"
                 float4 worldPos : TEXCOORD1;
             };
 
+            
             float mask(float3 position, float3 center, float radius, float hardness)
             {
                 float m = distance(center, position);
                 return 1 - smoothstep(radius * hardness, radius, m);  
             }
             
-            float maskBrush(float3 position, float3 center, float hardness, float value)
-            {
-                float m = distance(center, position);
-                
-                float step = smoothstep(value * hardness, value, m);
-                
-                return 1.0 - step;
-            } 
-                      
-            float Deg2Rad(float degrees)
-            {
-                const float deg2Rad = (UNITY_PI * 2.0) / 360.0;
-                return degrees * deg2Rad;
-            }
             
-            float2 RotateBrush(float2 p, float degrees)
-            {
-                float rad = Deg2Rad(degrees);
-                float newX = p.x * cos(rad) - p.y * sin(rad);
-                float newY = p.x * sin(rad) + p.y * cos(rad);
-                return float2(newX, newY);
-            }
-            
-            float2 CalculateBrushUV(float2 uv, float2 paintUV, float brushScale, float brushRotate)
-            {
-                return RotateBrush((uv - paintUV) / brushScale, -brushRotate) * 0.5 + 0.5;
-            }
-
             v2f vert (appdata v)
             {
                 v2f o;
-				
+				    
 				o.worldPos = mul(unity_ObjectToWorld, v.vertex);
                 
                 o.uv = v.uv;
@@ -111,18 +80,12 @@ Shader "Unlit/TexturePainter"
                     return float4(0, 0, 1, 1);
                 }
                 
-                float2 uv = CalculateBrushUV(i.uv, _PainterUV, _Radius, _BrushRotate);
-                float alphaBrush = tex2D(_BrushTexture, uv).a;
-                
                 float4 col = tex2D(_MainTex, i.uv);
                 
-                //float f = mask(i.worldPos, _PainterPosition, _Radius, _Hardness);
-                float f = maskBrush(i.worldPos, _PainterPosition, _Hardness, alphaBrush);
-                
-                
+                float f = mask(i.worldPos, _PainterPosition, _Radius, _Hardness);
                 float edge = f * _Strength;
                 
-                return lerp(col, _PainterColor, edge);//edge);
+                return lerp(col, _PainterColor, edge);
             }
             ENDCG
         }
