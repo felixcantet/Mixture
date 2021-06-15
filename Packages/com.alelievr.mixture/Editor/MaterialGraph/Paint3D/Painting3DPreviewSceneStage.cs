@@ -24,6 +24,8 @@ namespace Mixture
         // GUI
         private int selectedMaterial = 0;
         private float paintRadius = 0.1f;
+        private float paintHardness = 0.5f;
+        private float paintStrength = 0.5f;
         
         
         public GameObject meshGO;
@@ -36,6 +38,7 @@ namespace Mixture
 
         int prepareUVID = Shader.PropertyToID("_PrepareUV");
         int positionID = Shader.PropertyToID("_PainterPosition");
+        int paintUVID = Shader.PropertyToID("_PainterUV");
         int hardnessID = Shader.PropertyToID("_Hardness");
         int strengthID = Shader.PropertyToID("_Strength");
         int radiusID = Shader.PropertyToID("_Radius");
@@ -121,7 +124,7 @@ namespace Mixture
             command.Clear();
         }
 
-        public void Paint(PaintTarget p, Vector3 pos, float radius = 1f, float hardness = .5f, float strength = .5f,
+        public void Paint(PaintTarget p, Vector3 pos, Vector2 texCoordAtPos, float radius = 1f, float hardness = .5f, float strength = .5f,
             Color? color = null)
         {
             RenderTexture mask = p.getMask();
@@ -132,6 +135,7 @@ namespace Mixture
 
             paintMaterial.SetFloat(prepareUVID, 0);
             paintMaterial.SetVector(positionID, pos);
+            paintMaterial.SetVector(paintUVID, texCoordAtPos);
             paintMaterial.SetFloat(hardnessID, hardness);
             paintMaterial.SetFloat(strengthID, strength);
             paintMaterial.SetFloat(radiusID, radius);
@@ -157,7 +161,7 @@ namespace Mixture
         {
             HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
 
-            SceneView.lastActiveSceneView.LookAt(meshGO.transform.position);
+            //SceneView.lastActiveSceneView.LookAt(meshGO.transform.position);
 
             var mousePos = Event.current.mousePosition;
 
@@ -171,7 +175,7 @@ namespace Mixture
                 //Debug.Log("Hit obj => " + hit.collider.gameObject.name);
                 if (hit.collider.gameObject.TryGetComponent<PaintTarget>(out PaintTarget p) && isPainting)
                 {
-                    Paint(p, hit.point, paintRadius, 0.5f, 0.5f, paintColors[selectedMaterial]);
+                    Paint(p, hit.point, hit.textureCoord, paintRadius, paintHardness, paintStrength, paintColors[selectedMaterial]);
                 }
             }
             else
@@ -191,11 +195,13 @@ namespace Mixture
                 guiContents, GUI.skin.button, 
                 GUILayout.Width(50 * guiContents.Length), GUILayout.Height(50));
             paintRadius = GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
+            paintHardness = GUILayout.HorizontalSlider(paintHardness, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
+            paintStrength = GUILayout.HorizontalSlider(paintStrength, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
             Handles.EndGUI();
             
             SceneView.RepaintAll();
 
-            Handles.DrawWireArc(hit.point, hit.normal, Vector3.up, 360, 0.1f);
+            Handles.DrawWireArc(hit.point, hit.normal, Vector3.up, 360, paintRadius);
         }
     }
 
