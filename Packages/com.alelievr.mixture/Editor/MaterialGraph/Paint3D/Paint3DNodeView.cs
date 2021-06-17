@@ -24,15 +24,18 @@ namespace Mixture
                     if (node.inMesh == null)
                         return;
 
-                    if (node.refMat == null)
+                    if (node.materialA == null)
                         return;
                     
-                    Painting3DPreviewSceneStage.ShowWindow(node.inMesh, node.outMaterial, node.materialsPalette,
+                    node.InitializeCrts();
+                    
+                    Painting3DPreviewSceneStage.ShowWindow(node.inMesh, node.outMaterial, 
+                        new List<Material>(){ node.materialA, node.materialB },
                         node.extendIslandRenderTexture, node.uvIslandRenderTexture, node.maskRenderTexture, node.supportTexture);
                     
                 });
-            button.name = "Open 3D Paiting";
-            button.text = "Open 3D Paiting";
+            button.name = "Open 3D Painting Scene";
+            button.text = "Open 3D Painting Scene";
             
             controlsContainer.Add(button);
         }

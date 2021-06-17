@@ -9,17 +9,20 @@ namespace Mixture
 {
     [Documentation(@"To be filled.")]
 
-    [System.Serializable, NodeMenuItem("Painting/Paint 3D")]
+    [System.Serializable, NodeMenuItem("Painting/Material Blend - Painting")]
     public class Paint3DNode : MixtureNode, IUseCustomRenderTextureProcessing
     {
         [Input(name = "In Mesh")]
         public Mesh inMesh;
 
-        [Input(name = "Reference Material")]
-        public Material refMat;
-
-        [Input(name = "Materials Palette")]
-        public IEnumerable<Material> materialsPalette;
+        [Input(name = "Material A")]
+        public Material materialA;
+        
+        [Input(name = "Material B")]
+        public Material materialB;
+        
+        // [Input(name = "Materials Palette")]
+        // public IEnumerable<Material> materialsPalette;
 
         [Output(name = "Out Material")]
         public Material outMaterial; // Je sais pas on out quoi par contre
@@ -28,8 +31,9 @@ namespace Mixture
 
         [SerializeField] public RenderTexture maskRenderTexture, extendIslandRenderTexture, uvIslandRenderTexture, supportTexture;
         List<CustomRenderTexture> crts;
+        
         public override bool hasSettings => false;
-        public override string name => "Paint 3D";
+        public override string name => "Material Blend - Painting";
 
         public override void OnNodeCreated()
         {
@@ -41,68 +45,58 @@ namespace Mixture
             this.supportTexture = new RenderTexture(maskRenderTexture.descriptor);
         }
 
-        public int frame = 0;
-        
+        protected override void Destroy()
+        {
+            base.Destroy();
+            Debug.Log("Node destroyed");
+            
+            foreach (var item in crts)
+            {
+                item.Release();
+            }
+            
+            crts.Clear();
+
+            maskRenderTexture.Release();
+            extendIslandRenderTexture.Release();
+            uvIslandRenderTexture.Release();
+            supportTexture.Release();
+        }
+
         protected override bool ProcessNode(CommandBuffer cmd)
         {
             if (!base.ProcessNode(cmd))
                 return false;
 
             // Convert Mask to Material
-            if (materialsPalette == null || materialsPalette.Count() < 2)
+            if (materialA == null || materialB == null)
                 return false;
 
-            if (outMaterial == null || outMaterial.shader != materialsPalette.First().shader)
+            if (!materialA.shader.Equals(materialB.shader))
+                return false;
+            
+            if (outMaterial == null || outMaterial.shader != materialA.shader)
             {
-                //Debug.Log("Process");
-                outMaterial = new Material(materialsPalette.First().shader);
+                outMaterial = new Material(materialA.shader);
                 InitializeCrts();
             }
-            //InitializeCrts();
-
-            // for (int i = 0; i < outMaterial.shader.GetPropertyCount(); i++)
-            // {
-            //     if (outMaterial.shader.GetPropertyType(i) == ShaderPropertyType.Texture)
-            //     {
-            //     }
-            // }
-
-            // frame++;
-            //
-            // if (frame >= 120)
-            // {
-            //     frame = 0;
-            //     InitializeCrts();
-            //     
-            //     Debug.Log("Frame updated");
-            // }
-            
             // Assign Texture to material
 
+            
             return true;
         }
 
-        void InitializeCrts()
+        public void InitializeCrts()
         {
-            if (materialsPalette.Count() < 2)
+            if (materialA == null || materialB == null)
             {
                 AddMessage("Paint Node should have 2 materials", NodeMessageType.Error);
                 return;
             }
             
             if (outMaterial == null)
-                outMaterial = new Material(materialsPalette.First().shader);
+                outMaterial = new Material(materialA.shader);
             
-            ///Debug.Log("Test");
-            //for (int i = 0; i < materialsPalette.Count(); i++)
-            //{
-            //    if (outMaterial.shader != materialsPalette.ElementAt(i).shader)
-            //    {
-            //        AddMessage($"Material shader {i} is not OKAY", NodeMessageType.Error);
-            //        return;
-            //    }
-            //}
-
             foreach (var item in crts)
             {
                 item.Release();
@@ -127,8 +121,8 @@ namespace Mixture
                     var crt = new CustomRenderTexture(graph.settings.width, graph.settings.height);
                     crt.material = new Material(Shader.Find("Hidden/Mixture/MixtureLerpTexture"));
                     crt.material.SetTexture("_Mask", extendIslandRenderTexture);
-                    crt.material.SetTexture("_MatA", materialsPalette.ElementAt(0).GetTexture(item.name));
-                    crt.material.SetTexture("_MatB", materialsPalette.ElementAt(1).GetTexture(item.name));
+                    crt.material.SetTexture("_MatA", materialA.GetTexture(item.name));
+                    crt.material.SetTexture("_MatB", materialB.GetTexture(item.name));
                     crt.name = item.name;
                     
                     crts.Add(crt);
@@ -152,23 +146,23 @@ namespace Mixture
             }
         }
 
-        [CustomPortBehavior(nameof(materialsPalette))]
-        IEnumerable<PortData> GetPortsForInputs(List<SerializableEdge> edges)
-        {
-            yield return new PortData { displayName = "In ", displayType = typeof(Material), acceptMultipleEdges = true };
-        }
+        // [CustomPortBehavior(nameof(materialsPalette))]
+        // IEnumerable<PortData> GetPortsForInputs(List<SerializableEdge> edges)
+        // {
+        //     yield return new PortData { displayName = "In ", displayType = typeof(Material), acceptMultipleEdges = true };
+        // }
+        //
+        // [CustomPortInput(nameof(materialsPalette), typeof(Material), allowCast = true)]
+        // public void GetInputs(List<SerializableEdge> edges)
+        // {
+        //     materialsPalette = edges.Select(e => (Material)e.passThroughBuffer);
+        // }
 
-        [CustomPortInput(nameof(materialsPalette), typeof(Material), allowCast = true)]
-        public void GetInputs(List<SerializableEdge> edges)
-        {
-            materialsPalette = edges.Select(e => (Material)e.passThroughBuffer);
-        }
-
-        [CustomPortOutput(nameof(outMaterial), typeof(Material))]
-        public void MaterialOutputHandler(List<SerializableEdge> edges)
-        {
-            //outMaterial = refMat; //new Material(Shader.Find("Standard"));
-        }
+        // [CustomPortOutput(nameof(outMaterial), typeof(Material))]
+        // public void MaterialOutputHandler(List<SerializableEdge> edges)
+        // {
+        //     //outMaterial = refMat; //new Material(Shader.Find("Standard"));
+        // }
 
         public IEnumerable<CustomRenderTexture> GetCustomRenderTextures()
         {

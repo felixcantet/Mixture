@@ -72,6 +72,7 @@ namespace Mixture
             meshGO = go;
             col = meshGO.GetComponent<Collider>();
             texturePaint = Shader.Find("Unlit/TexturePainter");
+            //texturePaint = Shader.Find("Unlit/TexturePainterWIP");
             extendIslands = Shader.Find("Unlit/ExtendIslands");
             
             paintMaterial = new Material(texturePaint);
@@ -89,11 +90,6 @@ namespace Mixture
             paintColors = new Color[2];
             paintColors[0] = Color.black;
             paintColors[1] = Color.white;
-            // paintColors[2] = Color.blue;
-            // paintColors[3] = Color.yellow;
-            // paintColors[4] = Color.magenta;
-            // paintColors[5] = Color.green;
-            
         }
         
         private void OnDisable()
@@ -147,8 +143,8 @@ namespace Mixture
             command.SetRenderTarget(mask);
             command.DrawRenderer(rend, paintMaterial, 0);
 
-            command.SetRenderTarget(support);
-            command.Blit(mask, support);
+            // command.SetRenderTarget(support);
+            // command.Blit(mask, support);
 
             command.SetRenderTarget(extend);
             command.Blit(mask, extend, extendMaterial);
@@ -213,7 +209,7 @@ namespace Mixture
         // Les instanciers au moment du Show Window
         // Besoins de les delete ?
 
-        public static void ShowWindow(Mesh m, Material refMat, IEnumerable<Material> materialsPalette, 
+        public static void ShowWindow(Mesh m, Material refMat, List<Material> materialsPalette, 
             RenderTexture extendIslandsRenderTexture, RenderTexture uvIslandsRenderTexture, RenderTexture maskRenderTexture,
             RenderTexture supportTexture)
         {
@@ -227,7 +223,7 @@ namespace Mixture
                 return;
             }
             
-            inst.SetupScene(m, refMat, materialsPalette.ToList(), extendIslandsRenderTexture, uvIslandsRenderTexture, maskRenderTexture, supportTexture);
+            inst.SetupScene(m, refMat, materialsPalette, extendIslandsRenderTexture, uvIslandsRenderTexture, maskRenderTexture, supportTexture);
         }
 
         protected override GUIContent CreateHeaderContent()
