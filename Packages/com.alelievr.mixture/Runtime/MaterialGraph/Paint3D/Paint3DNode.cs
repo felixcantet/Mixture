@@ -21,9 +21,6 @@ namespace Mixture
         [Input(name = "Material B")]
         public Material materialB;
         
-        // [Input(name = "Materials Palette")]
-        // public IEnumerable<Material> materialsPalette;
-
         [Output(name = "Out Material")]
         public Material outMaterial; // Je sais pas on out quoi par contre
                                      // Le mat du mesh ? 
@@ -57,10 +54,10 @@ namespace Mixture
             
             crts.Clear();
 
-            maskRenderTexture.Release();
-            extendIslandRenderTexture.Release();
-            uvIslandRenderTexture.Release();
-            supportTexture.Release();
+            maskRenderTexture?.Release();
+            extendIslandRenderTexture?.Release();
+            uvIslandRenderTexture?.Release();
+            supportTexture?.Release();
         }
 
         protected override bool ProcessNode(CommandBuffer cmd)
@@ -145,24 +142,6 @@ namespace Mixture
                 }
             }
         }
-
-        // [CustomPortBehavior(nameof(materialsPalette))]
-        // IEnumerable<PortData> GetPortsForInputs(List<SerializableEdge> edges)
-        // {
-        //     yield return new PortData { displayName = "In ", displayType = typeof(Material), acceptMultipleEdges = true };
-        // }
-        //
-        // [CustomPortInput(nameof(materialsPalette), typeof(Material), allowCast = true)]
-        // public void GetInputs(List<SerializableEdge> edges)
-        // {
-        //     materialsPalette = edges.Select(e => (Material)e.passThroughBuffer);
-        // }
-
-        // [CustomPortOutput(nameof(outMaterial), typeof(Material))]
-        // public void MaterialOutputHandler(List<SerializableEdge> edges)
-        // {
-        //     //outMaterial = refMat; //new Material(Shader.Find("Standard"));
-        // }
 
         public IEnumerable<CustomRenderTexture> GetCustomRenderTextures()
         {
