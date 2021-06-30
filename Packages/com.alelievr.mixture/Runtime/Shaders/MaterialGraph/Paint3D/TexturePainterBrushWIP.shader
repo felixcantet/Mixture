@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 Shader "Unlit/TexturePainterWIP"
 {
     Properties
@@ -5,7 +7,6 @@ Shader "Unlit/TexturePainterWIP"
         _PainterColor ("Painter Color", Color) = (0, 0, 0, 0)
         
         _BrushTexture ("Brush", 2D) = "white"
-        _BrushScale ("BrushScale", float) = 0.1
         _BrushRotate("BrushRotate", float) = 0.0
     }
 
@@ -29,17 +30,19 @@ Shader "Unlit/TexturePainterWIP"
             // BRUSH
             
             sampler2D _BrushTexture;
-            float _BrushScale;
             float _BrushRotate;
             
             // -----
             
             float3 _PainterPosition;
             float2 _PainterUV;
+            
             float _Radius;
             float _Hardness;
             float _Strength;
+            
             float4 _PainterColor;
+            
             float _PrepareUV;
 
             struct appdata
@@ -55,38 +58,24 @@ Shader "Unlit/TexturePainterWIP"
                 float4 worldPos : TEXCOORD1;
             };
 
-            bool ExistPointInTriangle(float3 p, float3 t1, float3 t2, float3 t3)
-            {
-                const float TOLERANCE = 1 - 0.1;
-            
-                float3 a = normalize(cross(t1 - t3, p - t1));
-                float3 b = normalize(cross(t2 - t1, p - t2));
-                float3 c = normalize(cross(t3 - t2, p - t3));
-            
-                float d_ab =dot(a, b);
-                float d_bc =dot(b, c);
-            
-                if (TOLERANCE < d_ab && TOLERANCE < d_bc) {
-                    return true;
-                }
-                return false;
-            }
-            
+
             float mask(float3 position, float3 center, float radius, float hardness)
             {
                 float m = distance(center, position);
                 return 1 - smoothstep(radius * hardness, radius, m);  
             }
             
-            float maskBrush(float3 position, float3 center, float hardness, float value)
+            float maskTest(float3 position, float3 center, float radius, float hardness)
             {
-                float m = distance(center, position);
+                float mX = distance(center.x, position.x);
+                float mY = distance(center.y, position.y);
                 
-                float step = smoothstep(value * hardness, value, m);
+                if(mX < radius && mY < radius)
+                    return 1 - smoothstep(radius * hardness, radius, (mX+mY) * 0.5);
                 
-                return 1.0 - step;
-            } 
-                      
+                return 0;
+            }
+            
             float Deg2Rad(float degrees)
             {
                 const float deg2Rad = (UNITY_PI * 2.0) / 360.0;
@@ -106,15 +95,6 @@ Shader "Unlit/TexturePainterWIP"
                 return RotateBrush((uv - paintUV) / brushScale, -brushRotate) * 0.5 + 0.5;
             }
             
-            bool IsPaintRange(float2 mainUV, float2 paintUV, float brushScale, float deg) 
-            {
-                float3 p = float3(mainUV, 0);
-                float3 v1 = float3(RotateBrush(float2(-brushScale, brushScale), deg) + paintUV, 0);
-                float3 v2 = float3(RotateBrush(float2(-brushScale, -brushScale), deg) + paintUV, 0);
-                float3 v3 = float3(RotateBrush(float2(brushScale, -brushScale), deg) + paintUV, 0);
-                float3 v4 = float3(RotateBrush(float2(brushScale, brushScale), deg) + paintUV, 0);
-                return ExistPointInTriangle(p, v1, v2, v3) || ExistPointInTriangle(p, v1, v3, v4);
-            }
             
             v2f vert (appdata v)
             {
@@ -127,7 +107,7 @@ Shader "Unlit/TexturePainterWIP"
 				float4 uv = float4(0, 0, 0, 1);
                 uv.xy = float2(1, _ProjectionParams.x) * (v.uv.xy * float2( 2, 2) - float2(1, 1));
 				o.vertex = uv; 
-                
+				
                 return o;
             }
             
@@ -141,24 +121,47 @@ Shader "Unlit/TexturePainterWIP"
                 
                 float4 col = tex2D(_MainTex, i.uv);
                 
+                //float2 uv = CalculateBrushUV(i.uv, _PainterUV, _Radius, _BrushRotate);
+                float2 uv = CalculateBrushUV(i.worldPos, _PainterPosition, _Radius, _BrushRotate);
+                //float2 uv = CalculateBrushUV(i.vertex, _PainterUV, _Radius, _BrushRotate);
                 
-                if(IsPaintRange(i.uv, _PainterUV, _Radius, _BrushRotate))
-                {
-                    float2 uv = CalculateBrushUV(i.uv, _PainterUV, _Radius, _BrushRotate);
-                    float alphaBrush = tex2D(_BrushTexture, uv).a;
-                    
+                float alphaBrush = tex2D(_BrushTexture, uv).a;
                 
-                    //float f = mask(i.worldPos, _PainterPosition, _Radius, _Hardness);
-                    float f = maskBrush(i.worldPos, _PainterPosition, _Hardness, alphaBrush);
+                float f = mask(i.worldPos, _PainterPosition, _Radius, _Hardness);
+                float edge = f * _Strength * alphaBrush;
                 
+                return lerp(col, _PainterColor, edge);
                 
-                    float edge = f * _Strength;
-                    return lerp(col, _PainterColor, edge);
-                }
-                
-                return col;
             }
             ENDCG
         }
     }
 }
+
+/*
+bool ExistPointInTriangle(float3 p, float3 t1, float3 t2, float3 t3)
+            {
+                const float TOLERANCE = 1 - 0.1;
+            
+                float3 a = normalize(cross(t1 - t3, p - t1));
+                float3 b = normalize(cross(t2 - t1, p - t2));
+                float3 c = normalize(cross(t3 - t2, p - t3));
+            
+                float d_ab =dot(a, b);
+                float d_bc =dot(b, c);
+            
+                if (TOLERANCE < d_ab && TOLERANCE < d_bc) {
+                    return true;
+                }
+                return false;
+            }
+            
+            bool IsPaintRange(float2 mainUV, float2 paintUV, float brushScale, float deg) 
+            {
+                float3 p = float3(mainUV, 0);
+                float3 v1 = float3(RotateBrush(float2(-brushScale, brushScale), deg) + paintUV, 0);
+                float3 v2 = float3(RotateBrush(float2(-brushScale, -brushScale), deg) + paintUV, 0);
+                float3 v3 = float3(RotateBrush(float2(brushScale, -brushScale), deg) + paintUV, 0);
+                float3 v4 = float3(RotateBrush(float2(brushScale, brushScale), deg) + paintUV, 0);
+                return ExistPointInTriangle(p, v1, v2, v3) || ExistPointInTriangle(p, v1, v3, v4);
+            }*/

@@ -22,7 +22,7 @@ namespace Mixture
         public string materialBFieldName => "materialB";
         public string inMeshFieldName => "inMesh";
 
-        private int btnIdx = -1;
+        private int btnIdx = 0;
         
         public override void Enable(bool fromInspector)
         {
@@ -64,7 +64,7 @@ namespace Mixture
             node.onAfterEdgeDisconnected += OnPortDisconnectedCallback;
 
             controlsContainer.Add(button);
-            btnIdx = controlsContainer.Children().Count(x => x.Equals(button));
+            btnIdx = controlsContainer.Q("Open 3D Painting Scene").tabIndex;
             
             
             controlsContainer[btnIdx].SetEnabled(test);
