@@ -59,18 +59,18 @@ Shader "Unlit/TexturePainterWIP"
             };
 
 
-            float mask(float3 position, float3 center, float radius, float hardness)
+            float maskCircle(float3 position, float3 center, float radius, float hardness)
             {
                 float m = distance(center, position);
                 return 1 - smoothstep(radius * hardness, radius, m);  
             }
             
-            float maskTest(float3 position, float3 center, float radius, float hardness)
+            float maskSquare(float3 position, float3 center, float radius, float hardness)
             {
                 float mX = distance(center.x, position.x);
                 float mY = distance(center.y, position.y);
                 
-                if(mX < radius && mY < radius)
+                if(mX <= radius && mY <= radius)
                     return 1 - smoothstep(radius * hardness, radius, (mX+mY) * 0.5);
                 
                 return 0;
@@ -127,7 +127,8 @@ Shader "Unlit/TexturePainterWIP"
                 
                 float alphaBrush = tex2D(_BrushTexture, uv).a;
                 
-                float f = mask(i.worldPos, _PainterPosition, _Radius, _Hardness);
+                //float f = maskCircle(i.worldPos, _PainterPosition, _Radius, _Hardness);
+                float f = maskSquare(i.worldPos, _PainterPosition, _Radius, _Hardness);
                 float edge = f * _Strength * alphaBrush;
                 
                 return lerp(col, _PainterColor, edge);

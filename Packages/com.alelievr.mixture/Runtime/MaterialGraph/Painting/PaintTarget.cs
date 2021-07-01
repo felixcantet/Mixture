@@ -3,11 +3,8 @@ using UnityEngine;
 
 namespace Mixture
 {
-    [ExecuteInEditMode]
-    public class PaintTarget3D : MonoBehaviour
+    public class PaintTarget : MonoBehaviour
     {
-        public List<Material> materialsPalette = new List<Material>();
-
         public float extendsIslandOffset = 1.0f;
 
         public RenderTexture extendIslandsRenderTexture;
@@ -16,17 +13,20 @@ namespace Mixture
         public RenderTexture supportTexture;
 
         private Renderer rd;
+        private Collider col;
 
         public RenderTexture getMask() => maskRenderTexture;
         public RenderTexture getUVIslands() => uvIslandsRenderTexture;
         public RenderTexture getExtend() => extendIslandsRenderTexture;
         public RenderTexture getSupport() => supportTexture;
         public Renderer getRenderer() => rd;
-
+        public Collider getCollider() => col;
+        
         private void Start()
         {
             Debug.Log($"Paint Target {gameObject.name} Start()");
             rd = GetComponent<Renderer>();
+            col = GetComponent<Collider>();
         }
 
         void OnDestroy()

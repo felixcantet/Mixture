@@ -9,7 +9,7 @@ namespace Mixture
     [Documentation(@"To be filled.")]
     
     [System.Serializable, NodeMenuItem("Painting/Texture Painting")]
-    public class Paint2DNode : MixtureNode, IUseCustomRenderTextureProcessing
+    public class Paint2DNode : PaintNode
     {
         [Input(name = "Texture Reference")]
         public Texture refTexture = null;
@@ -18,26 +18,10 @@ namespace Mixture
         public Texture mask = null;
 
 
-        [SerializeField] public RenderTexture maskRenderTexture, extendIslandRenderTexture, uvIslandRenderTexture, supportTexture;
-        List<CustomRenderTexture> crts;
-        
-        public override bool hasSettings => false;
         public override string name => "Texture Painting";
         
         public Material outMaterial = null;
         private const string unlitShader = "Unlit/Texture";
-        
-        
-        public override void OnNodeCreated()
-        {
-            base.OnNodeCreated();
-            
-            this.maskRenderTexture = new RenderTexture(1024, 1024, 0);
-            this.maskRenderTexture.filterMode = FilterMode.Bilinear;
-            this.extendIslandRenderTexture = new RenderTexture(maskRenderTexture.descriptor);
-            this.uvIslandRenderTexture = new RenderTexture(maskRenderTexture.descriptor);
-            this.supportTexture = new RenderTexture(maskRenderTexture.descriptor);
-        }
         
         protected override bool ProcessNode(CommandBuffer cmd)
         {
@@ -53,26 +37,7 @@ namespace Mixture
             return true;
         }
         
-        
-        protected override void Destroy()
-        {
-            base.Destroy();
-            Debug.Log("Node destroyed");
-            
-            foreach (var item in crts)
-            {
-                item.Release();
-            }
-            
-            crts.Clear();
-
-            maskRenderTexture?.Release();
-            extendIslandRenderTexture?.Release();
-            uvIslandRenderTexture?.Release();
-            supportTexture?.Release();
-        }
-        
-        public void InitializeCrts()
+        public override void InitializeCrts()
         {
             if (outMaterial == null)
                 outMaterial = new Material(Shader.Find(unlitShader));
@@ -122,17 +87,6 @@ namespace Mixture
                     Debug.Log("Assign : " + item.name);
                     outMaterial.SetTexture(item.name, crts.Find(x => x.name.Equals(item.name)));
                 }
-            }
-        }
-        
-        public IEnumerable<CustomRenderTexture> GetCustomRenderTextures()
-        {
-            if (crts == null)
-                crts = new List<CustomRenderTexture>();
-            
-            foreach (var item in crts)
-            {
-                yield return item;
             }
         }
     }

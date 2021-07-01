@@ -1,79 +1,75 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Mixture
 {
-    [CustomEditor(typeof(PaintTarget2D))]
-    public class PaintTarget2DGUI : Editor
+    public class PaintTargetGUI : Editor
     {
+        protected PaintTarget paintTarget;
+        
         // GUI
-        private int selectedMaterial = 0;
-        private float paintRadius = 0.1f;
-        private float paintHardness = 0.5f;
-        private float paintStrength = 0.5f;
+        protected float paintRadius = 0.1f;
+        protected float paintHardness = 0.5f;
+        protected float paintStrength = 0.5f;
+        protected Color paintColor = Color.white;
+        protected Texture brush = null;
 
 
         public GameObject meshGO;
-        private bool isPainting = false;
+        protected bool isPainting = false;
 
+
+        // Shader Property
+        protected readonly int brushTextureID = Shader.PropertyToID("_BrushTexture");
+        protected readonly int prepareUVID = Shader.PropertyToID("_PrepareUV");
+        protected readonly int positionID = Shader.PropertyToID("_PainterPosition");
+        protected readonly int paintUVID = Shader.PropertyToID("_PainterUV");
+        protected readonly int hardnessID = Shader.PropertyToID("_Hardness");
+        protected readonly int strengthID = Shader.PropertyToID("_Strength");
+        protected readonly int radiusID = Shader.PropertyToID("_Radius");
+        protected readonly int colorID = Shader.PropertyToID("_PainterColor");
+        protected readonly int textureID = Shader.PropertyToID("_MainTex");
+        protected readonly int uvOffsetID = Shader.PropertyToID("_OffsetUV");
+        protected readonly int uvIslandsID = Shader.PropertyToID("_UVIslands");
+
+        // Paint Material
+        protected Material paintMaterial;
+        protected Material extendMaterial;
         public Shader texturePaint;
         public Shader extendIslands;
 
-        private readonly int prepareUVID = Shader.PropertyToID("_PrepareUV");
-        private readonly int positionID = Shader.PropertyToID("_PainterPosition");
-        private readonly int paintUVID = Shader.PropertyToID("_PainterUV");
-        private readonly int hardnessID = Shader.PropertyToID("_Hardness");
-        private readonly int strengthID = Shader.PropertyToID("_Strength");
-        private readonly int radiusID = Shader.PropertyToID("_Radius");
-        private readonly int colorID = Shader.PropertyToID("_PainterColor");
-        private readonly int textureID = Shader.PropertyToID("_MainTex");
-        private readonly int uvOffsetID = Shader.PropertyToID("_OffsetUV");
-        private readonly int uvIslandsID = Shader.PropertyToID("_UVIslands");
-
-        private Material paintMaterial;
-        private Material extendMaterial;
-
-        private CommandBuffer command;
-
-        private PaintTarget2D paintTarget2D;
-
-        private Color paintColor = Color.cyan;
+        protected CommandBuffer command;
         
-        
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
             Debug.Log("Enable GUI");
             Tools.hidden = true;
 
-
-            paintTarget2D = (target as PaintTarget2D);
-            var go = paintTarget2D.gameObject;
+            paintTarget = (target as PaintTarget);
+            var go = paintTarget.gameObject;
 
             if (go == null)
                 return;
 
             meshGO = go;
-            
+            meshGO.transform.localScale *= 10;
             //texturePaint = Shader.Find("Unlit/TexturePainter");
             texturePaint = Shader.Find("Unlit/TexturePainterWIP");
             extendIslands = Shader.Find("Unlit/ExtendIslands");
 
+
             paintMaterial = new Material(texturePaint);
             extendMaterial = new Material(extendIslands);
 
+            brush = Texture2D.whiteTexture;
+            paintMaterial.SetTexture(brushTextureID, brush);
+
             command = new CommandBuffer();
             command.name = "CommmandBuffer-1";
-
-            var sceneView = SceneView.lastActiveSceneView;
-            sceneView.size = 0.52f;
-            //sceneView.camera.transform.position = new Vector3(0.0f, 0.0f, -1f);
-            sceneView.in2DMode = true;
-            sceneView.orthographic = true;
-            sceneView.AlignViewToObject(paintTarget2D.cameraPosition.transform);
         }
 
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
             Debug.Log("Disable GUI !");
             Tools.hidden = false;
@@ -81,7 +77,7 @@ namespace Mixture
             command.Release();
         }
 
-        public void InitTextures(PaintTarget3D p)
+        public void InitTextures(PaintTarget p)
         {
             RenderTexture mask = p.getMask();
             RenderTexture uvIslands = p.getUVIslands();
@@ -101,9 +97,10 @@ namespace Mixture
             command.Clear();
         }
 
-        public void Paint(PaintTarget2D p, Vector3 pos, Vector2 texCoordAtPos, float radius = 1f, float hardness = .5f,
-            float strength = .5f,
-            Color? color = null)
+        public void Paint(PaintTarget p, 
+            Vector3 pos, Vector2 texCoordAtPos, 
+            float radius = 1f, float hardness = .5f, float strength = .5f, Color? color = null, 
+            bool isPainting = false)
         {
             RenderTexture mask = p.getMask();
             RenderTexture uvIslands = p.getUVIslands();
@@ -125,8 +122,11 @@ namespace Mixture
             command.SetRenderTarget(mask);
             command.DrawRenderer(rend, paintMaterial, 0);
 
-            command.SetRenderTarget(support);
-            command.Blit(mask, support);
+            if (isPainting)
+            {
+                command.SetRenderTarget(support);
+                command.Blit(mask, support);
+            }
 
             command.SetRenderTarget(extend);
             command.Blit(mask, extend, extendMaterial);
@@ -135,40 +135,31 @@ namespace Mixture
             command.Clear();
         }
 
-        private void OnSceneGUI()
+        
+        protected virtual void OnSceneGUI()
         {
-            var sceneView = SceneView.lastActiveSceneView;
-            //sceneView.camera.transform.position = new Vector3(0.0f, 0.0f, -1f);
-            sceneView.in2DMode = true;
-            sceneView.orthographic = true;
-            sceneView.AlignViewToObject(paintTarget2D.cameraPosition.transform);
-            sceneView.size = 0.52f;
-            
-            
             HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
-            
-            Debug.Log("Update GUI");
-            //SceneView.lastActiveSceneView.LookAt(meshGO.transform.position);
+            //Debug.Log("Update GUI");
 
+            HandlePaintInput();
+            DisplayGUI();
+            
+            SceneView.RepaintAll();
+        }
+
+        protected void HandlePaintInput()
+        {
             var mousePos = Event.current.mousePosition;
 
             RaycastHit hit;
-
             Ray ray = HandleUtility.GUIPointToWorldRay(mousePos);
-            
-
-            if (paintTarget2D.getCollider().Raycast(ray, out hit, 10000.0f))
+            if (paintTarget.getCollider().Raycast(ray, out hit, 10000.0f))
             {
-                //Debug.Log("Hit obj => " + hit.collider.gameObject.name);
-                if (hit.collider.gameObject.TryGetComponent<PaintTarget2D>(out PaintTarget2D p) && isPainting)
+                if (hit.collider.gameObject.TryGetComponent<PaintTarget>(out PaintTarget p))
                 {
-                    Paint(p, hit.point, hit.textureCoord, paintRadius, paintHardness, paintStrength, paintColor);
+                    Paint(p, hit.point, hit.textureCoord, paintRadius, paintHardness, paintStrength, paintColor, isPainting);
                     //Paint(p, hit.point, paintRadius, paintHardness, paintStrength, paintColors[selectedMaterial]);
                 }
-            }
-            else
-            {
-                Debug.Log("Dont hit");
             }
 
 
@@ -179,9 +170,15 @@ namespace Mixture
                               (isPainting ? true : false));
                 Debug.Log($"Is Painting = {isPainting}");
             }
+        }
 
+        protected virtual void DisplayGUI()
+        {
+            var previousBrush = brush;
+            
             Handles.BeginGUI();
-            paintColor = EditorGUILayout.ColorField(paintColor, GUILayout.Width(100), GUILayout.Height(50));
+            brush = EditorGUILayout.ObjectField(brush, typeof(Texture), false, GUILayout.Width(100),
+                GUILayout.Height(100)) as Texture;
             paintRadius =
                 GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
             paintHardness =
@@ -189,11 +186,11 @@ namespace Mixture
             paintStrength =
                 GUILayout.HorizontalSlider(paintStrength, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
             Handles.EndGUI();
-
-            SceneView.RepaintAll();
-
-
-            Handles.DrawWireArc(hit.point, hit.normal, Vector3.up, 360, paintRadius);
+            
+            if (brush == null)
+                brush = Texture2D.whiteTexture;
+            else if (brush != previousBrush)
+                paintMaterial.SetTexture(brushTextureID, brush);
         }
     }
 }

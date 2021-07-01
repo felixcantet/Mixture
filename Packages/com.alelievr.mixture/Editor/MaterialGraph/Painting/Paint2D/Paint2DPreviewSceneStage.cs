@@ -1,53 +1,31 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.ComponentModel;
 using UnityEditor;
-using UnityEditor.EditorTools;
-using UnityEditor.Graphs;
 using UnityEditor.SceneManagement;
-using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.VirtualTexturing;
-using FilterMode = UnityEngine.FilterMode;
 
 namespace Mixture
 {
-    public class PaintWindow : EditorWindow
+    public class Paint2DPreviewSceneStage : PreviewSceneStage
     {
-    }
-    
-    public class Painting3DPreviewSceneStage : PreviewSceneStage
-    {
-        // Récupérer un mesh
-        // Plusieurs mat ?
-        // Les instanciers au moment du Show Window
-        // Besoins de les delete ?
-
-        public static void ShowWindow(Mesh m, Material refMat, List<Material> materialsPalette, 
-            RenderTexture extendIslandsRenderTexture, RenderTexture uvIslandsRenderTexture, RenderTexture maskRenderTexture,
+        private Paint2DNode node;
+        public static void ShowWindow(Material mat, RenderTexture extendIslandsRenderTexture, RenderTexture uvIslandsRenderTexture, RenderTexture maskRenderTexture,
             RenderTexture supportTexture)
         {
-            var inst = CreateInstance<Painting3DPreviewSceneStage>();
+            var inst = CreateInstance<Paint2DPreviewSceneStage>();
             inst.scene = EditorSceneManager.NewPreviewScene();
             StageUtility.GoToStage(inst, true);
 
-            if (materialsPalette == null)
-            {
-                Debug.LogError("Materials Palette is null");
-                return;
-            }
-            
-            inst.SetupScene(m, refMat, materialsPalette, extendIslandsRenderTexture, uvIslandsRenderTexture, maskRenderTexture, supportTexture);
+            inst.SetupScene(mat, extendIslandsRenderTexture, uvIslandsRenderTexture, maskRenderTexture, supportTexture);
         }
 
         protected override GUIContent CreateHeaderContent()
         {
-            return new GUIContent("Painting 3D Stage");
+            return new GUIContent("Painting 2D Stage");
         }
 
-        private void SetupScene(Mesh m, Material refMat, List<Material> materialsPalette,
+        private void SetupScene(Material mat,
             RenderTexture extendIslandsRenderTexture, RenderTexture uvIslandsRenderTexture, RenderTexture maskRenderTexture,
             RenderTexture supportTexture)
         {
@@ -59,28 +37,27 @@ namespace Mixture
 
             EditorSceneManager.MoveGameObjectToScene(lightingObj, scene);
 
+            var cameraPosition = new GameObject("Camera position");
+            cameraPosition.transform.position = new Vector3(0.0f, 0.0f, -0.10f);
+            EditorSceneManager.MoveGameObjectToScene(cameraPosition, scene);
+
+            
             // Instantiate Mesh
-            GameObject test = new GameObject("Preview");
-            //test.tag = "PaintObject";
+            GameObject test = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            MeshRenderer rd = test.GetComponent<MeshRenderer>();
+            rd.sharedMaterial = mat;
 
-            MeshFilter mf = test.AddComponent<MeshFilter>();
-            mf.sharedMesh = m;
-
-            MeshRenderer rd = test.AddComponent<MeshRenderer>();
-            rd.sharedMaterial = refMat;
-
-            var pt = test.AddComponent<PaintTarget3D>();
-            pt.materialsPalette = materialsPalette;
+            var pt = test.AddComponent<PaintTarget2D>();
+            pt.cameraPosition = cameraPosition;
             pt.extendIslandsRenderTexture = extendIslandsRenderTexture;
             pt.maskRenderTexture = maskRenderTexture;
             pt.supportTexture = supportTexture;
             pt.uvIslandsRenderTexture = uvIslandsRenderTexture;
-
-            test.AddComponent<MeshCollider>();
-
-            
             
             EditorSceneManager.MoveGameObjectToScene(test, scene);
+
+
+            Selection.activeGameObject = test;
         }
 
         protected override bool OnOpenStage()
@@ -89,7 +66,7 @@ namespace Mixture
 
             Debug.Log("We are opening a stage !");
             HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
-            
+
             return baseOpenStage;
         }
         
