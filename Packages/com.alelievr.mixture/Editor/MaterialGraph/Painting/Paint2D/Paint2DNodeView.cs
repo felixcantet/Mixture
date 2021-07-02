@@ -12,6 +12,8 @@ namespace Mixture
     {
         private Paint2DNode node;
         
+        void SaveView() => node?.SaveCurrentTexture();
+        
         public override void Enable(bool fromInspector)
         {
             base.Enable(fromInspector);
@@ -33,6 +35,7 @@ namespace Mixture
             button.text = "Open 2D Window";
 
             controlsContainer.Add(button);
+            controlsContainer.Add(new Button(SaveView) { text = "Save Current Masque"});
         }
     }
 }

@@ -24,6 +24,8 @@ namespace Mixture
 
         private int btnIdx = 0;
         
+        void SaveView() => node?.SaveCurrentTexture();
+        
         public override void Enable(bool fromInspector)
         {
             base.Enable(fromInspector);
@@ -64,6 +66,8 @@ namespace Mixture
             node.onAfterEdgeDisconnected += OnPortDisconnectedCallback;
 
             controlsContainer.Add(button);
+            controlsContainer.Add(new Button(SaveView) { text = "Save Current Mask"});
+            
             btnIdx = controlsContainer.Q("Open 3D Painting Scene").tabIndex;
             
             
