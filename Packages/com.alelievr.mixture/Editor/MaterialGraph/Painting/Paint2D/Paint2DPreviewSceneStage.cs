@@ -9,14 +9,17 @@ namespace Mixture
 {
     public class Paint2DPreviewSceneStage : PreviewSceneStage
     {
+        //"Hidden/Paint2DPreview"
         private Paint2DNode node;
-        public static void ShowWindow(Material mat, RenderTexture extendIslandsRenderTexture, RenderTexture uvIslandsRenderTexture, RenderTexture maskRenderTexture,
+        public static void ShowWindow(Material mat, Texture refTex, RenderTexture extendIslandsRenderTexture, RenderTexture uvIslandsRenderTexture, RenderTexture maskRenderTexture,
             RenderTexture supportTexture)
         {
             var inst = CreateInstance<Paint2DPreviewSceneStage>();
             inst.scene = EditorSceneManager.NewPreviewScene();
             StageUtility.GoToStage(inst, true);
-
+            
+            mat.SetTexture(Shader.PropertyToID("_MainTex"), refTex != null ? refTex : Texture2D.blackTexture);
+            
             inst.SetupScene(mat, extendIslandsRenderTexture, uvIslandsRenderTexture, maskRenderTexture, supportTexture);
         }
 

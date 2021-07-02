@@ -23,10 +23,10 @@ namespace Mixture
         public override bool hasSettings => false;
         public override string name => "Paint Base Node";
 
-        
+
         protected bool isInitialized = false;
 
-        
+
         public override void OnNodeCreated()
         {
             base.OnNodeCreated();
@@ -38,7 +38,7 @@ namespace Mixture
         {
             base.Enable();
         }
-        
+
         protected override bool ProcessNode(CommandBuffer cmd)
         {
             if (!base.ProcessNode(cmd))
@@ -51,12 +51,24 @@ namespace Mixture
                 this.extendIslandRenderTexture = new RenderTexture(maskRenderTexture.descriptor);
                 this.uvIslandRenderTexture = new RenderTexture(maskRenderTexture.descriptor);
                 this.supportTexture = new RenderTexture(maskRenderTexture.descriptor);
-                
+
+                Graphics.SetRenderTarget(this.maskRenderTexture);
+                GL.Clear(true, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+
+                Graphics.SetRenderTarget(this.extendIslandRenderTexture);
+                GL.Clear(true, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+
+                Graphics.SetRenderTarget(this.supportTexture);
+                GL.Clear(true, true, new Color(0.0f, 0.0f, 0.0f, 0.0f));
+
+                Graphics.SetRenderTarget(null);
+
                 LoadTexture();
-                
+
                 this.isInitialized = true;
             }
 
+            UpdateRenderTextures();
 
             return this.isInitialized;
         }
@@ -89,17 +101,16 @@ namespace Mixture
                 var references = graph.GetObjectsReferences();
                 foreach (var obj in references)
                 {
-                    if (obj is Texture2D)
+                    if (obj is Texture2D tex)
                     {
-                        Texture2D tex = obj as Texture2D;
                         if (tex.Equals(savedTexture))
                         {
                             savedTexture = tex;
-                            
+
                             Graphics.Blit(savedTexture, maskRenderTexture);
                             Graphics.Blit(savedTexture, supportTexture);
                             Graphics.Blit(savedTexture, extendIslandRenderTexture);
-                            
+
                             Debug.Log("Texture finded");
                             break;
                         }
@@ -112,15 +123,15 @@ namespace Mixture
                 UpdateRenderTextures();
             }
         }
-        
+
         public void SaveCurrentTexture()
         {
             Debug.Log("Save Texture");
-            
+
             // Temp texture for the readback (before compression)
             Texture2D tmp = new Texture2D(savedTexture.width, savedTexture.height, GraphicsFormat.R32G32B32A32_SFloat,
                 TextureCreationFlags.None);
-            
+
             // Radback color & depth:
             RenderTexture.active = extendIslandRenderTexture;
             tmp.ReadPixels(new Rect(0, 0, savedTexture.width, savedTexture.height), 0, 0);
@@ -133,23 +144,48 @@ namespace Mixture
 #endif
 
             graph.NotifyNodeChanged(this);
-            
+
             if (!graph.IsObjectInGraph(savedTexture))
                 graph.AddObjectToGraph(savedTexture);
         }
 
         protected void UpdateRenderTextures()
         {
-            if (savedTexture == null || settings.NeedsUpdate(graph, savedTexture, false))
+            if (savedTexture == null)
             {
-                Debug.Log("Update render textures");
                 if (graph.IsObjectInGraph(savedTexture))
                 {
                     graph.RemoveObjectFromGraph(savedTexture);
                     Object.DestroyImmediate(savedTexture, true);
                 }
-                savedTexture = new Texture2D(settings.GetResolvedWidth(graph), settings.GetResolvedHeight(graph), GraphicsFormat.R32G32B32A32_SFloat, TextureCreationFlags.None) { name = "SceneNode Rendering"};
+
+                Debug.Log("Create Saved Texture");
+                savedTexture =
+                    new Texture2D(settings.GetResolvedWidth(graph), settings.GetResolvedHeight(graph),
+                            GraphicsFormat.R32G32B32A32_SFloat, TextureCreationFlags.None)
+                        {name = "PaintMask"};
+
+                savedTexture.filterMode = settings.GetResolvedFilterMode(graph);
+                savedTexture.wrapMode = settings.GetResolvedWrapMode(graph);
+            }
+            
+
+            if (settings.NeedsUpdate(graph, savedTexture, false))
+            {
+                if (graph.IsObjectInGraph(savedTexture))
+                    graph.RemoveObjectFromGraph(savedTexture);
+
+
+                Debug.Log("Resize Saved Texture");
+                savedTexture.Resize(settings.GetResolvedWidth(graph), settings.GetResolvedHeight(graph),
+                    GraphicsFormat.R32G32B32A32_SFloat, false);
+
+                this.isInitialized = false;
+                
                 savedTexture.hideFlags = HideFlags.NotEditable;
+                savedTexture.filterMode = settings.GetResolvedFilterMode(graph);
+                savedTexture.wrapMode = settings.GetResolvedWrapMode(graph);
+
                 graph.AddObjectToGraph(savedTexture);
             }
         }

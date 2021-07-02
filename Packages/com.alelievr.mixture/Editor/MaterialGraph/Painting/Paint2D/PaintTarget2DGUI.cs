@@ -8,7 +8,9 @@ namespace Mixture
     public class PaintTarget2DGUI : PaintTargetGUI
     {
         private PaintTarget2D paintTarget2D;
-
+        
+        protected readonly int maskTextureID = Shader.PropertyToID("_Mask");
+        
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -36,6 +38,8 @@ namespace Mixture
             sceneView.size = 5.2f;
             
             base.OnSceneGUI();
+            
+            paintTarget2D.getRenderer().sharedMaterial.SetTexture(maskTextureID, paintTarget2D.getExtend());
         }
 
         protected override void DisplayGUI()

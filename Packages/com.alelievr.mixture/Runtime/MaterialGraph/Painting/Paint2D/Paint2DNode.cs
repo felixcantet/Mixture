@@ -21,7 +21,7 @@ namespace Mixture
         public override string name => "Texture Painting";
         
         public Material outMaterial = null;
-        private const string unlitShader = "Unlit/Texture";
+        private const string unlitShader = "Hidden/Paint2DPreview";//"Unlit/Texture";
         
         protected override bool ProcessNode(CommandBuffer cmd)
         {
@@ -30,64 +30,73 @@ namespace Mixture
 
             if (mask == null || outMaterial == null)
             {
-                outMaterial = new Material(Shader.Find(unlitShader));
                 InitializeCrts();
             }
 
+            mask = extendIslandRenderTexture;
+            
             return true;
         }
+        /*
+                 private RenderTexture refTexture = null;
+        private Material previewMat = null;
+         *            previewMat = new Material(Shader.Find("Hidden/Paint2DPreview"));
+            var rd = paintTarget2D.getRenderer();
+            rd.sharedMaterial = previewMat;
+         * 
+         */
         
         public override void InitializeCrts()
         {
             if (outMaterial == null)
                 outMaterial = new Material(Shader.Find(unlitShader));
             
-            foreach (var item in crts)
-            {
-                item.Release();
-            }
-            
-            crts.Clear();
-            
-            var propList = new List<ShaderPropertyData>();
-            for (int i = 0; i < outMaterial.shader.GetPropertyCount(); i++)
-                propList.Add(new ShaderPropertyData(outMaterial.shader, i));
-
-            foreach (var item in propList)
-            {
-                if (item.type == ShaderPropertyType.Texture)
-                {
-                    if(item.name.Contains("_Detail"))
-                        continue;
-                    
-                    var crt = new CustomRenderTexture(graph.settings.width, graph.settings.height);
-                    crt.material = new Material(Shader.Find("Hidden/Mixture/MixtureLerpTexture"));
-                    crt.material.SetTexture("_Mask", extendIslandRenderTexture);
-                    crt.material.SetTexture("_MatA", extendIslandRenderTexture);
-                    crt.material.SetTexture("_MatB", extendIslandRenderTexture);
-                    crt.name = item.name;
-                    
-                    mask = crt;
-                    
-                    crts.Add(crt);
-                }
-
-            }
-
-            foreach (var item in propList)
-            {
-                if (item.type == ShaderPropertyType.Texture)
-                {
-                    if (outMaterial.shader.GetPropertyTextureDimension(item.index) != TextureDimension.Tex2D)
-                        continue;
-                    
-                    if(item.name.Contains("_Detail"))
-                        continue;
-                    
-                    Debug.Log("Assign : " + item.name);
-                    outMaterial.SetTexture(item.name, crts.Find(x => x.name.Equals(item.name)));
-                }
-            }
+            // foreach (var item in crts)
+            // {
+            //     item.Release();
+            // }
+            //
+            // crts.Clear();
+            //
+            // var propList = new List<ShaderPropertyData>();
+            // for (int i = 0; i < outMaterial.shader.GetPropertyCount(); i++)
+            //     propList.Add(new ShaderPropertyData(outMaterial.shader, i));
+            //
+            // foreach (var item in propList)
+            // {
+            //     if (item.type == ShaderPropertyType.Texture)
+            //     {
+            //         if(item.name.Contains("_Detail"))
+            //             continue;
+            //         
+            //         var crt = new CustomRenderTexture(graph.settings.width, graph.settings.height);
+            //         crt.material = new Material(Shader.Find("Hidden/Mixture/MixtureLerpTexture"));
+            //         crt.material.SetTexture("_Mask", extendIslandRenderTexture);
+            //         crt.material.SetTexture("_MatA", extendIslandRenderTexture);
+            //         crt.material.SetTexture("_MatB", extendIslandRenderTexture);
+            //         crt.name = item.name;
+            //         
+            //         mask = crt;
+            //         
+            //         crts.Add(crt);
+            //     }
+            //
+            // }
+            //
+            // foreach (var item in propList)
+            // {
+            //     if (item.type == ShaderPropertyType.Texture)
+            //     {
+            //         if (outMaterial.shader.GetPropertyTextureDimension(item.index) != TextureDimension.Tex2D)
+            //             continue;
+            //         
+            //         if(item.name.Contains("_Detail"))
+            //             continue;
+            //         
+            //         Debug.Log("Assign : " + item.name);
+            //         outMaterial.SetTexture(item.name, crts.Find(x => x.name.Equals(item.name)));
+            //     }
+            // }
         }
     }
 }

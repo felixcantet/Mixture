@@ -27,7 +27,7 @@ namespace Mixture
                         node.InitializeCrts();
                     
                     
-                    Paint2DPreviewSceneStage.ShowWindow(node.outMaterial, node.extendIslandRenderTexture, node.uvIslandRenderTexture, node.maskRenderTexture,
+                    Paint2DPreviewSceneStage.ShowWindow(node.outMaterial, node.refTexture, node.extendIslandRenderTexture, node.uvIslandRenderTexture, node.maskRenderTexture,
                         node.supportTexture);
                 });
             
@@ -35,7 +35,7 @@ namespace Mixture
             button.text = "Open 2D Window";
 
             controlsContainer.Add(button);
-            controlsContainer.Add(new Button(SaveView) { text = "Save Current Masque"});
+            controlsContainer.Add(new Button(SaveView) { text = "Save Current Mask"});
         }
     }
 }

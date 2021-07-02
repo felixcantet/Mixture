@@ -28,7 +28,7 @@ namespace Mixture
                 guiContents[i] = new GUIContent(AssetPreview.GetAssetPreview(paintTarget3D.materialsPalette[i]));
             }
             
-            paintColor = Color.white;
+            paintColor = Color.black;
         }
 
         protected override void OnSceneGUI()
@@ -57,6 +57,8 @@ namespace Mixture
 
             if (brush != previousBrush)
                 paintMaterial.SetTexture(brushTextureID, brush);
+            
+            paintColor = selectedMaterial == 1 ? Color.white : Color.black;
         }
     }
 }

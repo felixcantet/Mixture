@@ -53,7 +53,7 @@ namespace Mixture
                 return;
 
             meshGO = go;
-            meshGO.transform.localScale *= 10;
+            meshGO.transform.localScale = Vector3.one * 10.0f;
             //texturePaint = Shader.Find("Unlit/TexturePainter");
             texturePaint = Shader.Find("Unlit/TexturePainterWIP");
             extendIslands = Shader.Find("Unlit/ExtendIslands");
@@ -130,7 +130,7 @@ namespace Mixture
 
             command.SetRenderTarget(extend);
             command.Blit(mask, extend, extendMaterial);
-
+            
             Graphics.ExecuteCommandBuffer(command);
             command.Clear();
         }

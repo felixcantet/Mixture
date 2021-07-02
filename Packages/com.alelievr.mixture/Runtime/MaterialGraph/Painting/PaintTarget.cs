@@ -22,7 +22,7 @@ namespace Mixture
         public Renderer getRenderer() => rd;
         public Collider getCollider() => col;
         
-        private void Start()
+        private void OnEnable()
         {
             Debug.Log($"Paint Target {gameObject.name} Start()");
             rd = GetComponent<Renderer>();
