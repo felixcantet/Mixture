@@ -78,6 +78,12 @@ namespace Mixture
             base.Destroy();
             Debug.Log("Node destroyed");
 
+            if (graph.IsObjectInGraph(savedTexture))
+            {
+                graph.RemoveObjectFromGraph(savedTexture);
+                Object.DestroyImmediate(savedTexture, true);
+            }
+            
             foreach (var item in crts)
             {
                 item.Release();
@@ -177,10 +183,15 @@ namespace Mixture
 
 
                 Debug.Log("Resize Saved Texture");
-                savedTexture.Resize(settings.GetResolvedWidth(graph), settings.GetResolvedHeight(graph),
-                    GraphicsFormat.R32G32B32A32_SFloat, false);
-
+                savedTexture = TextureRescale(savedTexture, settings.GetResolvedWidth(graph),
+                    settings.GetResolvedHeight(graph));
+                
                 this.isInitialized = false;
+                
+                maskRenderTexture?.Release();
+                extendIslandRenderTexture?.Release();
+                uvIslandRenderTexture?.Release();
+                supportTexture?.Release();
                 
                 savedTexture.hideFlags = HideFlags.NotEditable;
                 savedTexture.filterMode = settings.GetResolvedFilterMode(graph);
@@ -190,6 +201,23 @@ namespace Mixture
             }
         }
 
+        public Texture2D TextureRescale(Texture2D tex, int width, int height)
+        {
+            RenderTexture rd = RenderTexture.GetTemporary(width, height, 0);
+            Graphics.Blit(tex, rd);
+
+            tex.Resize(width, height, GraphicsFormat.R32G32B32A32_SFloat, false);
+            
+            RenderTexture.active = rd;
+            tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            RenderTexture.active = null;
+            tex.Apply();
+
+            RenderTexture.ReleaseTemporary(rd);
+            
+            return tex;
+        }
+        
         public IEnumerable<CustomRenderTexture> GetCustomRenderTextures()
         {
             if (crts == null)
