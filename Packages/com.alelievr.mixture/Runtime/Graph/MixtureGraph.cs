@@ -393,8 +393,9 @@ namespace Mixture
         public void FlushTexturesToDisk()
         {
             List<Object> assetsToKeep = new List<Object>();
-            if (type == MixtureGraphType.Material &&
-                AssetDatabase.LoadAllAssetsAtPath(mainAssetPath)[0] as Material == null)
+            //var objects = AssetDatabase.LoadAssetAtPath<Material>(mainAssetPath);
+            if (type == MixtureGraphType.Material && AssetDatabase.LoadAssetAtPath<Material>(mainAssetPath) == null) 
+                //AssetDatabase.LoadAllAssetsAtPath(mainAssetPath)[0] as Material == null)
             {
                 AssetDatabase.AddObjectToAsset(outputMaterial, this);
                 AssetDatabase.SetMainObject(outputMaterial, mainAssetPath);

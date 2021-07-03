@@ -22,6 +22,13 @@ namespace Mixture
         public TextureDimension dimension;
         public bool displayInOutput = false;
         public object defaultValue;
+
+        public ShaderPropertyData(string name, ShaderPropertyType type)
+        {
+            this.name = name;
+            this.type = type;
+        }
+        
         public ShaderPropertyData(Shader shader, int index)
         {
             this.index = index;
@@ -611,9 +618,10 @@ namespace Mixture
                         // Check texture dim before assigning:
                         if (edge.passThroughBuffer is Texture t && t != null)
                         {
-                            var tex = graph.FindOutputTexture(edge.inputPortIdentifier, true);
+                            //var tex = graph.FindOutputTexture(edge.inputPortIdentifier, true);
                             if (material.shader.GetPropertyTextureDimension(propertyIndex) == t.dimension)
-                                material.SetTexture(propName, tex == null ? t : tex);
+                                //material.SetTexture(propName, tex == null ? t : tex);
+                                material.SetTexture(propName, t);
                         }
 
                         break;
