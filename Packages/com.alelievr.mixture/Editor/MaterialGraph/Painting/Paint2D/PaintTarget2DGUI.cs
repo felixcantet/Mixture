@@ -1,6 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 
 namespace Mixture
 {
@@ -14,7 +15,7 @@ namespace Mixture
         protected override void OnEnable()
         {
             base.OnEnable();
-
+            
             paintTarget2D = (paintTarget as PaintTarget2D);
             
             var sceneView = SceneView.lastActiveSceneView;
@@ -41,27 +42,17 @@ namespace Mixture
             
             paintTarget2D.getRenderer().sharedMaterial.SetTexture(maskTextureID, paintTarget2D.getExtend());
         }
-
-        protected override void DisplayGUI()
+        
+        protected override void WindowFunc(int id)
         {
-            Handles.BeginGUI();
-            var previousBrush = brush;
-            brush = EditorGUILayout.ObjectField(brush, typeof(Texture), false, GUILayout.Width(100),
-                GUILayout.Height(100)) as Texture;
-            paintColor = EditorGUILayout.ColorField(paintColor, GUILayout.Width(50), GUILayout.Height(50));
-            paintRadius =
-                GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            paintHardness =
-                GUILayout.HorizontalSlider(paintHardness, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            paintStrength =
-                GUILayout.HorizontalSlider(paintStrength, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            Handles.EndGUI();
-
-            if (brush == null)
-                brush = Texture2D.whiteTexture;
-
-            if (brush != previousBrush)
-                paintMaterial.SetTexture(brushTextureID, brush);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Paint Color", GUILayout.Height(30), GUILayout.Width(50), GUILayout.ExpandWidth(true));
+            paintColor = EditorGUILayout.ColorField(paintColor, GUILayout.Width(75), GUILayout.Height(50));
+            GUILayout.EndHorizontal();
+            
+            SeparatorGUI();
+            
+            base.WindowFunc(id);
         }
     }
 }

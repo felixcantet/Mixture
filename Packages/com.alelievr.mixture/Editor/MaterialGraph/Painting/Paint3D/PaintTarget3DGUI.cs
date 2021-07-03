@@ -36,29 +36,19 @@ namespace Mixture
             base.OnSceneGUI();
         }
 
-        protected override void DisplayGUI()
+        protected override void WindowFunc(int id)
         {
-            Handles.BeginGUI();
-            var previousBrush = brush;
-            brush = EditorGUILayout.ObjectField(brush, typeof(Texture), false, GUILayout.Width(100),
-                GUILayout.Height(100)) as Texture;
+            GUILayout.BeginVertical();
+            GUILayout.Label("Select Material", GUILayout.Height(30));
             selectedMaterial = GUILayout.Toolbar(selectedMaterial, guiContents, GUI.skin.button, 
-                GUILayout.Width(50 * guiContents.Length), GUILayout.Height(50));
-            paintRadius =
-                GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            paintHardness =
-                GUILayout.HorizontalSlider(paintHardness, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            paintStrength =
-                GUILayout.HorizontalSlider(paintStrength, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            Handles.EndGUI();
-
-            if (brush == null)
-                brush = Texture2D.whiteTexture;
-
-            if (brush != previousBrush)
-                paintMaterial.SetTexture(brushTextureID, brush);
+                GUILayout.Width(100), GUILayout.Height(50));
+            GUILayout.EndVertical();
             
             paintColor = selectedMaterial == 1 ? Color.white : Color.black;
+            
+            SeparatorGUI();
+            
+            base.WindowFunc(id);
         }
     }
 }

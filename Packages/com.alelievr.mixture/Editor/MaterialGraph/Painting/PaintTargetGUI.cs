@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 
 namespace Mixture
 {
@@ -172,25 +173,43 @@ namespace Mixture
             }
         }
 
-        protected virtual void DisplayGUI()
+        protected void DisplayGUI()
+        {
+            Handles.BeginGUI();
+            GUILayout.Window(0, Rect.MinMaxRect(5.0f, 50.0f, 100.0f, 150.0f), WindowFunc, new GUIContent("Paint Parameters"), 
+                GUILayout.MaxWidth(100), GUILayout.MaxHeight(150), 
+                GUILayout.MinWidth(5), GUILayout.MinHeight(50));
+            Handles.EndGUI();
+        }
+        
+        protected virtual void WindowFunc(int id)
         {
             var previousBrush = brush;
             
-            Handles.BeginGUI();
-            brush = EditorGUILayout.ObjectField(brush, typeof(Texture), false, GUILayout.Width(100),
-                GUILayout.Height(100)) as Texture;
-            paintRadius =
-                GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            paintHardness =
-                GUILayout.HorizontalSlider(paintHardness, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            paintStrength =
-                GUILayout.HorizontalSlider(paintStrength, 0.01f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
-            Handles.EndGUI();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Brush", GUILayout.Height(30), GUILayout.Width(50), GUILayout.ExpandWidth(true));
+            brush = EditorGUILayout.ObjectField(brush, typeof(Texture), false, GUILayout.Width(50),
+                GUILayout.Height(50)) as Texture;
+            GUILayout.EndHorizontal();
             
             if (brush == null)
                 brush = Texture2D.whiteTexture;
-            else if (brush != previousBrush)
+
+            if (brush != previousBrush)
                 paintMaterial.SetTexture(brushTextureID, brush);
+            
+            SeparatorGUI();
+            
+            paintRadius = Mathf.Clamp(EditorGUILayout.FloatField("Brush Radius", paintRadius, GUILayout.Width(100), GUILayout.Height(20), GUILayout.ExpandWidth(true)), 0.01f, 10.0f);//GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
+            paintHardness = Mathf.Clamp(EditorGUILayout.FloatField("Brush Hardness", paintHardness, GUILayout.Width(100), GUILayout.Height(20), GUILayout.ExpandWidth(true)), 0.001f, 1.0f);//GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
+            paintStrength = Mathf.Clamp(EditorGUILayout.FloatField("Brush Strength", paintStrength, GUILayout.Width(100), GUILayout.Height(20), GUILayout.ExpandWidth(true)), 0.1f, 1.0f);//GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
+        }
+
+        protected void SeparatorGUI()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            EditorGUILayout.Space();
         }
     }
 }

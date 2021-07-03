@@ -81,6 +81,8 @@ namespace Mixture
             EditorSceneManager.MoveGameObjectToScene(test, scene);
             
             Selection.activeGameObject = test;
+            Selection.activeGameObject = null;
+            Selection.activeGameObject = test;
         }
 
         protected override bool OnOpenStage()
