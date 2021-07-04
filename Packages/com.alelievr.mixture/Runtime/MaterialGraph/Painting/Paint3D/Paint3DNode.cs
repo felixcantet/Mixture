@@ -16,13 +16,13 @@ namespace Mixture
         public Mesh inMesh;
 
         [Input(name = "Material A")]
-        public Material materialA;
+        public MixtureMaterial materialA = null;
         
         [Input(name = "Material B")]
-        public Material materialB;
+        public MixtureMaterial materialB = null;
         
         [Output(name = "Out Material")]
-        public Material outMaterial;
+        public MixtureMaterial outMaterial;
 
         public override string name => "Material Blend - Painting";
         
@@ -35,12 +35,15 @@ namespace Mixture
             if (materialA == null || materialB == null)
                 return false;
 
+            if (materialA.material == null || materialB.material == null)
+                return false;
+            
             if (!materialA.shader.Equals(materialB.shader))
                 return false;
             
             if (outMaterial == null || outMaterial.shader != materialA.shader)
             {
-                outMaterial = new Material(materialA.shader);
+                outMaterial = new MixtureMaterial(materialA.shader);//new Material(materialA.shader);
                 InitializeCrts();
             }
             
@@ -56,7 +59,7 @@ namespace Mixture
             }
             
             if (outMaterial == null)
-                outMaterial = new Material(materialA.shader);
+                outMaterial = new MixtureMaterial(materialA.shader);//new Material(materialA.shader);
             
             foreach (var item in crts)
             {
@@ -82,8 +85,8 @@ namespace Mixture
                     var crt = new CustomRenderTexture(graph.settings.width, graph.settings.height);
                     crt.material = new Material(Shader.Find("Hidden/Mixture/MixtureLerpTexture"));
                     crt.material.SetTexture("_Mask", extendIslandRenderTexture);
-                    crt.material.SetTexture("_MatA", materialA.GetTexture(item.name));
-                    crt.material.SetTexture("_MatB", materialB.GetTexture(item.name));
+                    crt.material.SetTexture("_MatA", materialA.material.GetTexture(item.name));
+                    crt.material.SetTexture("_MatB", materialB.material.GetTexture(item.name));
                     crt.name = item.name;
                     
                     crts.Add(crt);
@@ -102,7 +105,7 @@ namespace Mixture
                         continue;
                     
                     Debug.Log("Assign : " + item.name);
-                    outMaterial.SetTexture(item.name, crts.Find(x => x.name.Equals(item.name)));
+                    outMaterial.material.SetTexture(item.name, crts.Find(x => x.name.Equals(item.name)));
                 }
             }
         }

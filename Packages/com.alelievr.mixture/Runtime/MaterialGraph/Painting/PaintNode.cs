@@ -10,7 +10,7 @@ using UnityEngine.Serialization;
 namespace Mixture
 {
     [System.Serializable]
-    public abstract class PaintNode : MixtureNode, IUseCustomRenderTextureProcessing
+    public abstract class PaintNode : BaseMaterialNode, IUseCustomRenderTextureProcessing
     {
         [SerializeField]
         public RenderTexture maskRenderTexture, extendIslandRenderTexture, uvIslandRenderTexture, supportTexture;

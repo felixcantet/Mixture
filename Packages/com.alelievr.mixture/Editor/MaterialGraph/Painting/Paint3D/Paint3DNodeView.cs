@@ -43,8 +43,8 @@ namespace Mixture
 
                     node.InitializeCrts();
 
-                    Painting3DPreviewSceneStage.ShowWindow(node.inMesh, node.outMaterial,
-                        new List<Material>() {node.materialA, node.materialB},
+                    Painting3DPreviewSceneStage.ShowWindow(node.inMesh, node.outMaterial.material,
+                        new List<Material>() {node.materialA.material, node.materialB.material},
                         node.extendIslandRenderTexture, node.uvIslandRenderTexture, node.maskRenderTexture,
                         node.supportTexture);
                 });
