@@ -1,66 +1,41 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using GraphProcessor;
-using ICSharpCode.NRefactory.Ast;
 using UnityEngine.Rendering;
+using System.Collections.Generic;
+using System.Linq;
+
 
 namespace Mixture
 {
-    [System.Serializable, NodeMenuItem("Custom/Create Material")]
-    public class CreateMaterialNode : MixtureNode
+    [System.Serializable, NodeMenuItem("Material/Create Material")]
+    public class CreateMaterialNode : BaseMaterialNode
     {
-        [Input] public List<object> inputs;
-        [ShowInInspector][Output] public Material material;
+        [Input] public List<object> input;
 
-        [HideInInspector]public string shaderName = "Standard";
-        [HideInInspector]public Shader shader;
+        [ShowInInspector][Output] public MixtureMaterial output;
+
+        [HideInInspector] public Shader shader;
+
+        public override string name => "Create Material";
+
         public override bool showDefaultInspector => true;
-        public override string name => "CreateMaterialNode";
 
-        private List<ShaderPropertyData> properties;
+        public override Material previewMaterial
+        {
+            get
+            {
+                if (output == null)
+                {
+                    CreateOutputMaterial();
+                }
 
-        [HideInInspector] public Action OnShaderChange;
-
-        // TODO : Custom Preview
+                return output.material;
+            }
+        }
 
         protected override void Enable()
         {
-            if (material == null)
-            {
-                InitializeMaterial();
-            }
-        }
-
-        [CustomPortBehavior(nameof(inputs))]
-        IEnumerable<PortData> GetInputPort(List<SerializableEdge> edges)
-        {
-            BuildPropertyData();
-            foreach (var item in properties)
-            {
-                Debug.Log(graph.outputNode.GetTypeFromShaderProperty(item));
-                yield return new PortData
-                {
-                    displayName = item.description,
-                    displayType = graph.outputNode.GetTypeFromShaderProperty(item),
-                    identifier = item.index.ToString()
-                };
-            }
-        }
-
-        void BuildPropertyData()
-        {
-            if (properties == null)
-                properties = new List<ShaderPropertyData>();
-
-            // if (properties.Count == shader.GetPropertyCount())
-            //     return;
-
-            properties.Clear();
-            for (int i = 0; i < shader.GetPropertyCount(); i++)
-            {
-                properties.Add(new ShaderPropertyData(shader, i));
-            }
         }
 
         protected override bool ProcessNode(CommandBuffer cmd)
@@ -68,105 +43,138 @@ namespace Mixture
             if (!base.ProcessNode(cmd))
                 return false;
 
+            if (output == null)
+                CreateOutputMaterial();
 
+            if (shader != null && shader != output.material.shader)
+            {
+                CreateOutputMaterial();
+                Debug.Log("Create Material");
+            }
+
+            //MaterialUtils.AssignMaterialPropertiesFromEdges(output, GetAllEdges().ToList());
+           // output.ResetAllPropertyToDefault();
+            //CustomInputFunction(GetAllEdges().Where(x => x.outputPort.fieldName == "input").ToList());
             return true;
         }
 
-        public void UpdateShader()
+        [CustomPortBehavior(nameof(input))]
+        IEnumerable<PortData> CreateMaterialPropertyPorts(List<SerializableEdge> edges)
         {
-            if (shaderName != shader.name)
-            {
-                OnShaderChange?.Invoke();
-                shader = Shader.Find(this.shaderName);
-                Debug.Log(this.shaderName);
-            }
-        }
+            if (output == null)
+                yield break;
 
-        public void InitializeMaterial()
-        {
-            if (GraphicsSettings.renderPipelineAsset == null)
+            foreach (var item in output.shaderProperties)
             {
-                shader = Shader.Find("Standard");
-                shaderName = "Standard";
-                this.material = new Material(shader);
-            }
-            else
-            {
-                shader = GraphicsSettings.defaultRenderPipeline.defaultMaterial.shader;
-                shaderName = shader.name;
-                this.material = new Material(GraphicsSettings.defaultRenderPipeline.defaultMaterial);
-            }
-        }
-
-        [CustomPortOutput(nameof(material), typeof(Material))]
-        public void PushMaterialOutput(List<SerializableEdge> edges)
-        {
-            foreach (var item in edges)
-            {
-                item.passThroughBuffer = material as Material;
+                if (item.displayInOutput)
+                {
+                    yield return new PortData()
+                    {
+                        displayName = item.name,
+                        displayType = MaterialUtils.GetTypeFromShaderProperty(output.shader, item),
+                        identifier = item.name
+                    };
+                }
             }
         }
         
-        [CustomPortInput(nameof(inputs), typeof(Material))]
-        void PushMaterialProperties(List<SerializableEdge> edges)
+        
+
+        [CustomPortInput(nameof(input), typeof(object))]
+        void CustomInputFunction(List<SerializableEdge> edges)
         {
-            if (material == null)
+            if (output == null)
                 return;
+
+           //output.ResetAllPropertyToDefault();
+
+            foreach (var item in inputPorts)
+            {
+                //var edge = item.GetEdges().FirstOrDefault(x => x.outputPortIdentifier == item.portData.identifier);
+                var prop = output.shaderProperties.FirstOrDefault(x => x.name == item.portData.identifier);
+                output.SetPropertyFromEdge(prop, item.GetEdges());
+            }
+
+            return;
             
             foreach (var item in edges)
             {
-                var type = item.inputPort.portData.displayType;
-
-                if (item.passThroughBuffer == null)
+                var prop = output.shaderProperties.FirstOrDefault(x => x.name == item.inputPortIdentifier);
+                if (prop == null)
                     continue;
-                var propertyIndex = int.Parse(item.inputPort.portData.identifier);
-                var propName = material.shader.GetPropertyName(propertyIndex);
-                switch (material.shader.GetPropertyType(propertyIndex))
+
+
+                switch (prop.type)
                 {
-                    case ShaderPropertyType.Color:
-                        material.SetColor(propName, MixtureConversions.ConvertObjectToColor(item.passThroughBuffer));
-                        break;
                     case ShaderPropertyType.Texture:
-                        // TODO: texture scale and offset
-                        // Check texture dim before assigning:
+                        // switch (output.material.shader.GetPropertyTextureDimension(prop.index))
+                        // {
+                        //case TextureDimension.Any
                         if (item.passThroughBuffer is Texture t && t != null)
                         {
-                            var tex = graph.FindOutputTexture(item.inputPortIdentifier, true);
-                            if (material.shader.GetPropertyTextureDimension(propertyIndex) == t.dimension)
-                                material.SetTexture(propName, tex == null ? t : tex);
+                            Debug.Log($"Texte : {t}" );
+                            if (output.material.shader.GetPropertyTextureDimension(prop.index) == t.dimension)
+                            {
+                                Debug.Log($"PASSED");   
+                                output.material.SetTexture(prop.name, (Texture) item.passThroughBuffer);
+                            }
                         }
+                        //     
+                        //     case TextureDimension.Tex2D:
+                        //         var texture2DValue = item.passThroughBuffer as Texture2D;
+                        //         output.material.SetTexture(prop.name, texture2DValue);
+                        //         Debug.Log($"Prop = {prop.name}");
+                        //         Debug.Log($"Texture : {texture2DValue}");
+                        //         continue;
+                        //     case TextureDimension.None:
+                        //         var texture = item.passThroughBuffer as Texture;
+                        //         output.material.SetTexture(prop.name, texture);
+                        //         Debug.Log($"Texture : {texture}");
+                        //         continue;
+                        //     case TextureDimension.Tex3D:
+                        //         var texture3DValue = item.passThroughBuffer as Texture3D;
+                        //         output.material.SetTexture(prop.name, texture3DValue);
+                        //         continue;
+                        //     case TextureDimension.Cube:
+                        //         var textureCubeValue = item.passThroughBuffer as Cubemap;
+                        //         output.material.SetTexture(prop.name, textureCubeValue);
+                        //         continue;
+                        // }
 
-                        break;
+                        continue;
                     case ShaderPropertyType.Float:
                     case ShaderPropertyType.Range:
-                        switch (item.passThroughBuffer)
-                        {
-                            case float f:
-                                material.SetFloat(propName, f);
-                                break;
-                            case Vector2 v:
-                                material.SetFloat(propName, v.x);
-                                break;
-                            case Vector3 v:
-                                material.SetFloat(propName, v.x);
-                                break;
-                            case Vector4 v:
-                                material.SetFloat(propName, v.x);
-                                break;
-                            case int i:
-                                material.SetFloat(propName, i);
-                                break;
-                            default:
-                                throw new Exception(
-                                    $"Can't assign {item.passThroughBuffer.GetType()} to material float property");
-                        }
-
-                        break;
+                        output.material.SetFloat(prop.name, (float) item.passThroughBuffer);
+                        continue;
+                    case ShaderPropertyType.Color:
+                        output.material.SetColor(prop.name, (Color) item.passThroughBuffer);
+                        continue;
                     case ShaderPropertyType.Vector:
-                        material.SetVector(propName, MixtureConversions.ConvertObjectToVector4(item.passThroughBuffer));
-                        break;
+                        output.material.SetVector(prop.name, (Vector4) item.passThroughBuffer);
+                        continue;
                 }
             }
+        }
+
+        public void CreateOutputMaterial()
+        {
+            Debug.Log("Reganerate Material");
+            if (shader == null)
+            {
+                if (GraphicsSettings.renderPipelineAsset != null)
+                    output = new MixtureMaterial(GraphicsSettings.renderPipelineAsset.defaultShader);
+                else
+                    output = new MixtureMaterial(Shader.Find("Standard"));
+            }
+            else
+            {
+                output = new MixtureMaterial(shader);
+            }
+        }
+
+        protected override void Disable()
+        {
+            base.Disable();
         }
     }
 }

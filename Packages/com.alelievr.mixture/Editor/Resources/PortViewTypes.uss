@@ -46,6 +46,10 @@
 	--port-color: #14cba8;
 }
 
+.Port_MixtureMaterial{
+	--port-color: #0082FF;
+}
+
 .Port_MixtureAttribute {
 	--port-color: #14cba8;
 }

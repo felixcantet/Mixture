@@ -304,6 +304,8 @@ namespace Mixture
 
         public override void OnInteractivePreviewGUI(Rect previewRect, GUIStyle background)
         {
+            if (previewMaterial == null)
+                return;
             HandleZoomAndPan(previewRect);
 
             if (firstLockedPreviewTarget?.previewTexture != null && e.type == EventType.Repaint)

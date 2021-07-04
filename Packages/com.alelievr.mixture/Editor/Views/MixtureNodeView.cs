@@ -487,7 +487,7 @@ namespace Mixture
 			}
 		}
 
-		void DrawTextureInfoHover(Rect previewRect, Texture texture)
+		protected virtual void DrawTextureInfoHover(Rect previewRect, Texture texture)
 		{
 			Rect infoRect = previewRect;
 			infoRect.yMin += previewRect.height - 24;

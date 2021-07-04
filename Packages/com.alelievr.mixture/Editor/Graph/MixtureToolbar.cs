@@ -24,7 +24,7 @@ namespace Mixture
         new MixtureGraphView graphView => base.graphView as MixtureGraphView;
         private ToolbarButtonData shaderButtonData;
 
-        class Styles
+        public class Styles
         {
             public const string realtimePreviewToggleText = "Always Update";
             public const string processButtonText = "Process";
@@ -212,7 +212,7 @@ namespace Mixture
                             new ShaderPropertyData(graph.outputMaterial.shader, i));
                     }
                 }
-
+                //foreach(item in )
                 for (int i = 0; i < propCount; i++)
                 {
                     Rect r = EditorGUILayout.GetControlRect(false, 0);
@@ -226,8 +226,13 @@ namespace Mixture
                     GUI.contentColor = GetGUIColor(graph.outputNode.enableParameters[i]);
                     GUILayout.Label( Styles.improveMixture.image);
                     GUI.contentColor = color;
-                    GUILayout.Label(graph.outputNode.enableParameters[i].description);
-                    GUILayout.Space(10);
+                    string label = graph.outputNode.enableParameters[i].description + " (" +
+                                   graph.outputNode.enableParameters[i].name + ")";
+                    if (label.Length > 50)
+                        label = label.Substring(0, 50) + "...";
+                    //GUILayout.Label(graph.outputNode.enableParameters[i].description + " (" + graph.outputNode.enableParameters[i].name + ")");
+                    GUILayout.Label(label);
+                    //GUILayout.Space(10);
                     GUILayout.FlexibleSpace();
                     // if (!graph.outputNode.enableParameters.ContainsKey(graph.outputMaterial.shader.GetPropertyName(i)))
                     // {

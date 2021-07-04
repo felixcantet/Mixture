@@ -46,6 +46,10 @@
 	background-color: #14cba8;
 }
 
+.parameter-MixtureMaterial{
+	background-color: #0082FF;
+}
+
 .parameter-MixtureAttribute{
 	background-color: #14cba8;
 }

@@ -1,65 +1,72 @@
 using UnityEngine.UIElements;
 using GraphProcessor;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Mixture
 {
     [NodeCustomEditor(typeof(CreateMaterialNode))]
-    public class CreateMaterialNodeView : MixtureNodeView
+    public class CreateMaterialNodeView : BaseMixtureMaterialNodeView
     {
         CreateMaterialNode node;
-        private ShaderSelectionDropdown dropdown;
-        private Button button;
-        void SetButtonLabel(string label)
-        {
-            //button.Q<Label>().text = label;
-        }
-        
+
         public override void Enable(bool fromInspector)
         {
             base.Enable(fromInspector);
-            
+
             node = nodeTarget as CreateMaterialNode;
-            if (button != null)
+            if (node.output == null || node.output.material == null)
             {
-                if(contentContainer.Contains(button))
-                    contentContainer.Remove(button);
+                node.CreateOutputMaterial();
+                
             }
-            button = new Button();
-            button.name = node.material.shader.name;
-            
+            SetupShaderSelector();
+            SetupShaderParameter();
+        }
+
+    
+        void SetupShaderSelector()
+        {
+            var shaderSelector = new Button();
+            shaderSelector.text = node.output.shader.name;
+            controlsContainer.Add(shaderSelector);
+            shaderSelector.clicked += () =>
+            {
+                var shaderDropdown = new ShaderSelectionDropdown(node.output.shader, (object shaderName) =>
+                {
+                    var shader = Shader.Find(shaderName as string);
+                    if (shader != null)
+                    {
+                        inputPortViews.ForEach(x => x.DisconnectAll());
+                        node.shader = shader;
+                    }
+                
+                    node.CreateOutputMaterial();
+                    
+                    
+                    ForceUpdatePorts();
+                    shaderSelector.text = shaderName as string;
+                });
+                shaderDropdown.Show(new Rect(Mouse.current.position.ReadValue(), new Vector2(0, 0)));
+            };
+        }
+
+        void SetupShaderParameter()
+        {
+            var button = new Button();
+            button.text = "Exposed Parameters";
+            controlsContainer.Add(button);
             button.clicked += () =>
             {
-                
-                var imgui = new IMGUIContainer();
-                imgui.onGUIHandler = DrawContainer;
-                dropdown = new ShaderSelectionDropdown(node.material.shader,
-                    (object shaderName) =>
-                    {
-                        if (this.node.shaderName != shaderName)
-                        {
-                            this.node.shaderName = shaderName as string;
-                            this.node.UpdateShader();
-                            imgui.visible = false;
-                            button.text = shaderName as string;
-                            //SetButtonLabel(shaderName as string);
-                            this.node.UpdatePortsForField(nameof(node.inputs));
-                        }
-                    });
-                dropdown.Show(contentRect);
-                void DrawContainer()
-                {
-                    
-                }
-
-                contentContainer.Add(imgui);
+                var rect = EditorWindow.focusedWindow.position;
+                rect.position = Mouse.current.position.ReadValue();
+                rect.xMin = rect.position.x;//0;//rect.width - MixtureToolbar.ShaderParametersPopupWindow.width;
+                rect.yMin = rect.position.y;//0;//21;
+                rect.size = Vector2.zero;
+                UnityEditor.PopupWindow.Show(rect,
+                    new ShaderParameterPopupWindow(this.node.output, () => {ForceUpdatePorts();}));
             };
-
-            Rect GetButtonRect()
-            {
-                return button.contentRect;
-            }
-            contentContainer.Add(button);
         }
     }
 }

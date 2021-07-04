@@ -47,6 +47,63 @@ Texture2D:
     offset: 0
     size: 0
     path: 
+--- !u!21 &-1230991619825526633
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Custom/SimpleShader
+  m_Shader: {fileID: 4800000, guid: 0342178196e8efd40b10689458a9c514, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Emissive:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Normal:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats: []
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color1: {r: 1, g: 1, b: 1, a: 1}
+    - _Color10: {r: 1, g: 1, b: 1, a: 1}
+    - _Color11: {r: 1, g: 1, b: 1, a: 1}
+    - _Color12: {r: 1, g: 1, b: 1, a: 1}
+    - _Color13: {r: 1, g: 1, b: 1, a: 1}
+    - _Color14: {r: 1, g: 1, b: 1, a: 1}
+    - _Color15: {r: 1, g: 1, b: 1, a: 1}
+    - _Color16: {r: 1, g: 1, b: 1, a: 1}
+    - _Color17: {r: 1, g: 1, b: 1, a: 1}
+    - _Color18: {r: 1, g: 1, b: 1, a: 1}
+    - _Color19: {r: 1, g: 1, b: 1, a: 1}
+    - _Color2: {r: 1, g: 1, b: 1, a: 1}
+    - _Color20: {r: 1, g: 1, b: 1, a: 1}
+    - _Color21: {r: 1, g: 1, b: 1, a: 1}
+    - _Color22: {r: 1, g: 1, b: 1, a: 1}
+    - _Color3: {r: 1, g: 1, b: 1, a: 1}
+    - _Color4: {r: 1, g: 1, b: 1, a: 1}
+    - _Color5: {r: 1, g: 1, b: 1, a: 1}
+    - _Color6: {r: 1, g: 1, b: 1, a: 1}
+    - _Color7: {r: 1, g: 1, b: 1, a: 1}
+    - _Color8: {r: 1, g: 1, b: 1, a: 1}
+    - _Color9: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -116,12 +173,13 @@ MonoBehaviour:
   stickyNotes: []
   position: {x: 833, y: 291, z: 0}
   scale: {x: 1, y: 1, z: 1}
-  version: 0
+  version: 1
   type: 3
   realtimePreview: 1
   isRealtime: 0
   isParameterViewOpen: 0
   embedInBuild: 0
+  defaultNodeInheritanceMode: -2
   objectReferences:
   - {fileID: 4997772079325739384}
   - {fileID: 3955360080535547842}
@@ -130,17 +188,37 @@ MonoBehaviour:
   - {fileID: 7521537033230425839}
   variants: []
   _mainOutputAsset: {fileID: 6155945657232479569}
+  _previewOutputMaterial: {fileID: -1230991619825526633}
   _outputMaterial: {fileID: 6155945657232479569}
   _outputTextures:
   - {fileID: -2956419148704346085}
   - {fileID: -2956419148704346085}
   - {fileID: 6016328309718719855}
   - {fileID: 6016328309718719855}
+  settings:
+    widthScale: 0
+    heightScale: 0
+    depthScale: 0
+    width: 512
+    height: 512
+    depth: 512
+    potSize: 512
+    sizeMode: 1
+    dimension: 2
+    outputChannels: 1
+    outputPrecision: 3
+    editFlags: 128
+    doubleBuffered: 0
+    wrapMode: 0
+    filterMode: 0
+    refreshMode: 0
+    period: 0
   references:
     version: 1
     00000000:
       type: {class: OutputNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 691aa737-9a89-40dd-b56d-201a248e396d
         computeOrder: 3
         position:
@@ -152,21 +230,19 @@ MonoBehaviour:
         expanded: 0
         debug: 0
         nodeLock: 0
-        rtSettings:
-          widthPercent: 0
-          heightPercent: 0
-          depthPercent: 0
+        settings:
+          widthScale: 1
+          heightScale: 1
+          depthScale: 1
           width: 512
           height: 512
-          sliceCount: 512
+          depth: 512
           potSize: 512
-          widthMode: 1
-          heightMode: 1
-          depthMode: 1
-          dimension: 2
-          outputChannels: 1
-          outputPrecision: 3
-          editFlags: 469
+          sizeMode: -1
+          dimension: -1
+          outputChannels: -1
+          outputPrecision: -1
+          editFlags: 471
           doubleBuffered: 0
           wrapMode: 0
           filterMode: 0
@@ -202,9 +278,11 @@ MonoBehaviour:
           conversionFormat: 0
           sRGB: 1
           finalCopyMaterial: {fileID: 3955360080535547842}
+        enableParameters: []
     00000001:
       type: {class: RidgedPerlinNoise, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 45b55e43-50ed-49df-b940-105b197c4bb0
         computeOrder: 0
         position:
@@ -216,20 +294,18 @@ MonoBehaviour:
         expanded: 0
         debug: 0
         nodeLock: 0
-        rtSettings:
-          widthPercent: 1
-          heightPercent: 1
-          depthPercent: 1
+        settings:
+          widthScale: 1
+          heightScale: 1
+          depthScale: 1
           width: 512
           height: 512
-          sliceCount: 1
+          depth: 1
           potSize: 0
-          widthMode: 0
-          heightMode: 0
-          depthMode: 0
-          dimension: 0
-          outputChannels: 0
-          outputPrecision: 0
+          sizeMode: -1
+          dimension: -1
+          outputChannels: -1
+          outputPrecision: -1
           editFlags: 255
           doubleBuffered: 0
           wrapMode: 0
@@ -312,6 +388,7 @@ MonoBehaviour:
     00000002:
       type: {class: TimeNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 3fd32b5b-8edd-4948-a1ef-e34f4d5d42dc
         computeOrder: 4
         position:
@@ -323,20 +400,18 @@ MonoBehaviour:
         expanded: 0
         debug: 0
         nodeLock: 0
-        rtSettings:
-          widthPercent: 1
-          heightPercent: 1
-          depthPercent: 1
+        settings:
+          widthScale: 1
+          heightScale: 1
+          depthScale: 1
           width: 512
           height: 512
-          sliceCount: 1
+          depth: 1
           potSize: 0
-          widthMode: 0
-          heightMode: 0
-          depthMode: 0
-          dimension: 0
-          outputChannels: 0
-          outputPrecision: 0
+          sizeMode: -1
+          dimension: -1
+          outputChannels: -1
+          outputPrecision: -1
           editFlags: 0
           doubleBuffered: 0
           wrapMode: 0
@@ -353,6 +428,7 @@ MonoBehaviour:
     00000003:
       type: {class: VectorRemapNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 0f096cfa-9d5f-4086-9aaa-b326aaf6027b
         computeOrder: 5
         position:
@@ -364,20 +440,18 @@ MonoBehaviour:
         expanded: 0
         debug: 0
         nodeLock: 0
-        rtSettings:
-          widthPercent: 1
-          heightPercent: 1
-          depthPercent: 1
+        settings:
+          widthScale: 1
+          heightScale: 1
+          depthScale: 1
           width: 512
           height: 512
-          sliceCount: 1
+          depth: 1
           potSize: 0
-          widthMode: 0
-          heightMode: 0
-          depthMode: 0
-          dimension: 0
-          outputChannels: 0
-          outputPrecision: 0
+          sizeMode: -1
+          dimension: -1
+          outputChannels: -1
+          outputPrecision: -1
           editFlags: 0
           doubleBuffered: 0
           wrapMode: 0
@@ -400,6 +474,7 @@ MonoBehaviour:
     00000004:
       type: {class: BlendNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: 03eae7cb-497d-4824-94aa-6647b8ab377e
         computeOrder: 2
         position:
@@ -411,20 +486,18 @@ MonoBehaviour:
         expanded: 0
         debug: 0
         nodeLock: 0
-        rtSettings:
-          widthPercent: 1
-          heightPercent: 1
-          depthPercent: 1
+        settings:
+          widthScale: 1
+          heightScale: 1
+          depthScale: 1
           width: 1024
           height: 1024
-          sliceCount: 1
+          depth: 1
           potSize: 0
-          widthMode: 0
-          heightMode: 0
-          depthMode: 0
-          dimension: 0
-          outputChannels: 0
-          outputPrecision: 0
+          sizeMode: -1
+          dimension: -1
+          outputChannels: -1
+          outputPrecision: -1
           editFlags: -257
           doubleBuffered: 0
           wrapMode: 0
@@ -483,6 +556,7 @@ MonoBehaviour:
     00000005:
       type: {class: ColorMatteNode, ns: Mixture, asm: Mixture.Runtime}
       data:
+        nodeCustomName: 
         GUID: df047e00-53fe-4b17-9191-c1a8bc2b67db
         computeOrder: 1
         position:
@@ -494,20 +568,18 @@ MonoBehaviour:
         expanded: 0
         debug: 0
         nodeLock: 0
-        rtSettings:
-          widthPercent: 1
-          heightPercent: 1
-          depthPercent: 1
+        settings:
+          widthScale: 1
+          heightScale: 1
+          depthScale: 1
           width: 1024
           height: 1024
-          sliceCount: 1
+          depth: 1
           potSize: 0
-          widthMode: 0
-          heightMode: 0
-          depthMode: 0
-          dimension: 0
-          outputChannels: 0
-          outputPrecision: 0
+          sizeMode: -1
+          dimension: -1
+          outputChannels: -1
+          outputPrecision: -1
           editFlags: -257
           doubleBuffered: 0
           wrapMode: 0
