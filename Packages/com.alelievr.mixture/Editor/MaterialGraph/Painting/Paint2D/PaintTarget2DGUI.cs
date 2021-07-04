@@ -18,6 +18,8 @@ namespace Mixture
             
             paintTarget2D = (paintTarget as PaintTarget2D);
             
+            meshGO.transform.localScale = Vector3.one * 10.0f;
+            
             var sceneView = SceneView.lastActiveSceneView;
             sceneView.size = 5.2f;
             sceneView.in2DMode = true;

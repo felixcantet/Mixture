@@ -1,16 +1,7 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
-using UnityEditor.EditorTools;
-using UnityEditor.Graphs;
 using UnityEditor.SceneManagement;
-using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.VirtualTexturing;
-using FilterMode = UnityEngine.FilterMode;
 
 namespace Mixture
 {

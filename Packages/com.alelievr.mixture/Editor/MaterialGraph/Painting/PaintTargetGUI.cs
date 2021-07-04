@@ -1,7 +1,6 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.UIElements;
 
 namespace Mixture
 {
@@ -10,6 +9,7 @@ namespace Mixture
         protected PaintTarget paintTarget;
         
         // GUI
+        protected float brushRotate = 0.0f;
         protected float paintRadius = 0.1f;
         protected float paintHardness = 0.5f;
         protected float paintStrength = 0.5f;
@@ -29,6 +29,7 @@ namespace Mixture
         protected readonly int hardnessID = Shader.PropertyToID("_Hardness");
         protected readonly int strengthID = Shader.PropertyToID("_Strength");
         protected readonly int radiusID = Shader.PropertyToID("_Radius");
+        protected readonly int rotateID = Shader.PropertyToID("_BrushRotate");
         protected readonly int colorID = Shader.PropertyToID("_PainterColor");
         protected readonly int textureID = Shader.PropertyToID("_MainTex");
         protected readonly int uvOffsetID = Shader.PropertyToID("_OffsetUV");
@@ -41,7 +42,7 @@ namespace Mixture
         public Shader extendIslands;
 
         protected CommandBuffer command;
-        
+
         protected virtual void OnEnable()
         {
             Debug.Log("Enable GUI");
@@ -54,9 +55,9 @@ namespace Mixture
                 return;
 
             meshGO = go;
-            meshGO.transform.localScale = Vector3.one * 10.0f;
+            meshGO.transform.localScale = Vector3.one;
             //texturePaint = Shader.Find("Unlit/TexturePainter");
-            texturePaint = Shader.Find("Unlit/TexturePainterWIP");
+            texturePaint = Shader.Find("Unlit/TexturePainterBrushWIP");
             extendIslands = Shader.Find("Unlit/ExtendIslands");
 
 
@@ -115,6 +116,7 @@ namespace Mixture
             paintMaterial.SetFloat(hardnessID, hardness);
             paintMaterial.SetFloat(strengthID, strength);
             paintMaterial.SetFloat(radiusID, radius);
+            paintMaterial.SetFloat(rotateID, brushRotate);
             paintMaterial.SetTexture(textureID, support);
             paintMaterial.SetColor(colorID, color ?? Color.red);
             extendMaterial.SetFloat(uvOffsetID, p.extendsIslandOffset);
@@ -140,8 +142,7 @@ namespace Mixture
         protected virtual void OnSceneGUI()
         {
             HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
-            //Debug.Log("Update GUI");
-
+            
             HandlePaintInput();
             DisplayGUI();
             
@@ -191,6 +192,8 @@ namespace Mixture
             brush = EditorGUILayout.ObjectField(brush, typeof(Texture), false, GUILayout.Width(50),
                 GUILayout.Height(50)) as Texture;
             GUILayout.EndHorizontal();
+            brushRotate = Mathf.Clamp(EditorGUILayout.FloatField("Brush Rotate", brushRotate, GUILayout.Width(100), GUILayout.Height(20), GUILayout.ExpandWidth(true)), 0.0f, 360.0f);//GUILayout.HorizontalSlider(paintRadius, 0.001f, 1.0f, GUILayout.Width(100), GUILayout.Height(50));
+            
             
             if (brush == null)
                 brush = Texture2D.whiteTexture;
