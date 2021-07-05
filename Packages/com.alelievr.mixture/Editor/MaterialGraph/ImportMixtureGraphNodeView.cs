@@ -40,8 +40,9 @@ namespace Mixture
 
         void SetupOverrideParameterFields()
         {
-            node.previewIndex = 0;
             node.LoadGraph();
+            if(node.previewIndex > node.readBack.Count - 1)
+                node.previewIndex = node.readBack.Count - 1;
             ForceUpdatePorts();
 
 
@@ -98,6 +99,18 @@ namespace Mixture
                     var f = new IntegerField(item.name);
                     f.name = item.name;
                     f.value = (int) item.value;
+                    f.RegisterValueChangedCallback(x =>
+                    {
+                        node.overrides.FirstOrDefault(y => y.name == item.name).value = x.newValue;
+                        node.graph.NotifyNodeChanged(node);
+                    });
+                    parameterOverrideContainer.Add(f);
+                }
+                else if (item.GetValueType() == typeof(float))
+                {
+                    var f = new FloatField(item.name);
+                    f.name = item.name;
+                    f.value = (float) item.value;
                     f.RegisterValueChangedCallback(x =>
                     {
                         node.overrides.FirstOrDefault(y => y.name == item.name).value = x.newValue;

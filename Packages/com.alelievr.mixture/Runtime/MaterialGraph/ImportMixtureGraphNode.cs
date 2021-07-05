@@ -95,7 +95,8 @@ namespace Mixture
 		           //  return false;
 	            // }
 
-
+	            if (importedGraph == null)
+		            return false;
 
 
             }
@@ -117,7 +118,8 @@ namespace Mixture
 	            foreach (var item in variant.parentGraph.outputNode.outputTextureSettings)
 	            {
 		            var index = variant.parentGraph.outputNode.outputTextureSettings.IndexOf(item);
-					variant.parentGraph.ReadBackTexture(variant.parentGraph.outputNode, item.finalCopyRT, externalTexture: this.readBack[index]);
+		            this.readBack[index] = variant.parentGraph.outputNode.outputTextureSettings[index].finalCopyRT;
+					//variant.parentGraph.ReadBackTexture(variant.parentGraph.outputNode, item.finalCopyRT, externalTexture: this.readBack[index], compressionFormat:TextureFormat.ARGB32);
 		            
 	            }
 
